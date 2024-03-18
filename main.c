@@ -1,12 +1,13 @@
 #include <gb/gb.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "backgroundmap.c"
+#include "backgroundtiles.c"
 
 
 
 /// setting the second parameter in set_sprite_data to 0 means 256 tiles (the second parameter = amount of tiles)
-/// after I've managed to identify this problem I will attempt making the background sprite load as well
+
 // once I'm in a better position I will move onto the next stage of development, namely, sprite collisions
 
 
@@ -40,8 +41,8 @@ void main(){
 SHOW_BKG;
 SHOW_SPRITES;
 
-set_bkg_data(0, 1, BKGtile);
-init_bkg(0);
+set_bkg_data(0, 18, BackgroundTiles);
+set_bkg_tiles(0, 0, 20, 18, backgroundmap);
 
 SpawnSprites();
 
@@ -75,7 +76,7 @@ set_sprite_tile(2, 2);
 
 move_sprite(0, 70, 30);
 move_sprite(1, 30, 30);
-move_sprite(2, 150, 150);
+move_sprite(2, 150, 140);
 
 
 while (1) {
