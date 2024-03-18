@@ -13,10 +13,10 @@
 	.globl _set_sprite_data
 	.globl _wait_vbl_done
 	.globl _joypad
-	.globl _BKGtile
 	.globl _character
-	.globl _pint
 	.globl _Wine
+	.globl _pint
+	.globl _BKGtile
 ;--------------------------------------------------------
 ; special function registers
 ;--------------------------------------------------------
@@ -28,13 +28,7 @@
 ; ram data
 ;--------------------------------------------------------
 	.area _INITIALIZED
-_Wine::
-	.ds 16
-_pint::
-	.ds 16
 _character::
-	.ds 16
-_BKGtile::
 	.ds 16
 ;--------------------------------------------------------
 ; absolute external ram data
@@ -56,24 +50,75 @@ _BKGtile::
 ; code
 ;--------------------------------------------------------
 	.area _CODE
-;main.c:14: void main(){
+;main.c:35: void main(){
 ;	---------------------------------
 ; Function main
 ; ---------------------------------
 _main::
-;main.c:18: SHOW_SPRITES;
+;main.c:39: SHOW_SPRITES;
 	ldh	a, (_LCDC_REG + 0)
 	or	a, #0x02
 	ldh	(_LCDC_REG + 0), a
-;main.c:22: SpawnSprites();
-;main.c:38: }
+;main.c:43: SpawnSprites();
+;main.c:59: }
 	jp	_SpawnSprites
-;main.c:40: void SpawnSprites(){
+_BKGtile:
+	.db #0xff	; 255
+	.db #0x00	; 0
+	.db #0x81	; 129
+	.db #0x7e	; 126
+	.db #0xbd	; 189
+	.db #0x42	; 66	'B'
+	.db #0xa5	; 165
+	.db #0x5a	; 90	'Z'
+	.db #0xa5	; 165
+	.db #0x5a	; 90	'Z'
+	.db #0xbd	; 189
+	.db #0x42	; 66	'B'
+	.db #0x81	; 129
+	.db #0x7e	; 126
+	.db #0xff	; 255
+	.db #0x00	; 0
+_pint:
+	.db #0x7e	; 126
+	.db #0x42	; 66	'B'
+	.db #0x42	; 66	'B'
+	.db #0x7e	; 126
+	.db #0x42	; 66	'B'
+	.db #0x7e	; 126
+	.db #0x42	; 66	'B'
+	.db #0x7e	; 126
+	.db #0x42	; 66	'B'
+	.db #0x7e	; 126
+	.db #0x42	; 66	'B'
+	.db #0x7e	; 126
+	.db #0x42	; 66	'B'
+	.db #0x7e	; 126
+	.db #0x3c	; 60
+	.db #0x3c	; 60
+_Wine:
+	.db #0x42	; 66	'B'
+	.db #0x7e	; 126
+	.db #0x42	; 66	'B'
+	.db #0x7e	; 126
+	.db #0x42	; 66	'B'
+	.db #0x7e	; 126
+	.db #0x3c	; 60
+	.db #0x3c	; 60
+	.db #0x18	; 24
+	.db #0x18	; 24
+	.db #0x18	; 24
+	.db #0x18	; 24
+	.db #0x18	; 24
+	.db #0x18	; 24
+	.db #0x3c	; 60
+	.db #0x3c	; 60
+;main.c:61: void SpawnSprites(){
 ;	---------------------------------
 ; Function SpawnSprites
 ; ---------------------------------
 _SpawnSprites::
-;main.c:44: set_sprite_data(0, 0, Wine);
+;main.c:65: set_sprite_data(0, 0, Wine);
 	ld	de, #_Wine
 	push	de
 	xor	a, a
@@ -81,14 +126,14 @@ _SpawnSprites::
 	push	af
 	call	_set_sprite_data
 	add	sp, #4
-;main.c:45: set_sprite_data(1, 0, pint);
+;main.c:66: set_sprite_data(1, 0, pint);
 	ld	de, #_pint
 	push	de
 	ld	hl, #0x01
 	push	hl
 	call	_set_sprite_data
 	add	sp, #4
-;main.c:46: set_sprite_data(2, 0, character);
+;main.c:67: set_sprite_data(2, 0, character);
 	ld	de, #_character
 	push	de
 	xor	a, a
@@ -124,12 +169,12 @@ _SpawnSprites::
 	ld	(hl), #0x96
 	inc	hl
 	ld	(hl), #0x96
-;main.c:57: while (1) {
+;main.c:78: while (1) {
 00107$:
-;main.c:58: uint8_t buttons = joypad();
+;main.c:79: uint8_t buttons = joypad();
 	call	_joypad
 	ld	c, a
-;main.c:59: uint8_t moveX = 0;
+;main.c:80: uint8_t moveX = 0;
 	ld	e, #0x00
 ;c:\gbdk\include\gb\gb.h:1893: OAM_item_t * itm = &shadow_OAM[nb];
 	ld	hl, #_shadow_OAM
@@ -147,17 +192,17 @@ _SpawnSprites::
 	ld	(hl+), a
 	ld	a, (hl)
 	ld	(hl), a
-;main.c:68: if (buttons & J_LEFT){
+;main.c:89: if (buttons & J_LEFT){
 	bit	1, c
 	jr	Z, 00104$
-;main.c:69: moveX = -1;
+;main.c:90: moveX = -1;
 	ld	e, #0xff
 	jr	00105$
 00104$:
-;main.c:71: else if (buttons & J_RIGHT){
+;main.c:92: else if (buttons & J_RIGHT){
 	bit	0, c
 	jr	Z, 00105$
-;main.c:72: moveX = 1;
+;main.c:93: moveX = 1;
 	ld	e, #0x01
 00105$:
 ;c:\gbdk\include\gb\gb.h:1893: OAM_item_t * itm = &shadow_OAM[nb];
@@ -169,46 +214,12 @@ _SpawnSprites::
 	ld	a, (bc)
 	add	a, e
 	ld	(bc), a
-;main.c:79: wait_vbl_done();
+;main.c:100: wait_vbl_done();
 	call	_wait_vbl_done
-;main.c:85: }
+;main.c:106: }
 	jr	00107$
 	.area _CODE
 	.area _INITIALIZER
-__xinit__Wine:
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x3c	; 60
-	.db #0x3c	; 60
-	.db #0x18	; 24
-	.db #0x18	; 24
-	.db #0x18	; 24
-	.db #0x18	; 24
-	.db #0x18	; 24
-	.db #0x18	; 24
-	.db #0x3c	; 60
-	.db #0x3c	; 60
-__xinit__pint:
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x3c	; 60
-	.db #0x3c	; 60
 __xinit__character:
 	.db #0x7e	; 126
 	.db #0x7e	; 126
@@ -226,21 +237,4 @@ __xinit__character:
 	.db #0x18	; 24
 	.db #0x24	; 36
 	.db #0x24	; 36
-__xinit__BKGtile:
-	.db #0xff	; 255
-	.db #0x00	; 0
-	.db #0x81	; 129
-	.db #0x7e	; 126
-	.db #0xbd	; 189
-	.db #0x42	; 66	'B'
-	.db #0xa5	; 165
-	.db #0x5a	; 90	'Z'
-	.db #0xa5	; 165
-	.db #0x5a	; 90	'Z'
-	.db #0xbd	; 189
-	.db #0x42	; 66	'B'
-	.db #0x81	; 129
-	.db #0x7e	; 126
-	.db #0xff	; 255
-	.db #0x00	; 0
 	.area _CABS (ABS)
