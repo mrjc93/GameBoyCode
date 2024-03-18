@@ -10,7 +10,9 @@
 ;--------------------------------------------------------
 	.globl _SpawnSprites
 	.globl _main
+	.globl _init_bkg
 	.globl _set_sprite_data
+	.globl _set_bkg_data
 	.globl _wait_vbl_done
 	.globl _joypad
 	.globl _character
@@ -50,17 +52,35 @@ _character::
 ; code
 ;--------------------------------------------------------
 	.area _CODE
-;main.c:35: void main(){
+;main.c:37: void main(){
 ;	---------------------------------
 ; Function main
 ; ---------------------------------
 _main::
-;main.c:39: SHOW_SPRITES;
+;main.c:40: SHOW_BKG;
+	ldh	a, (_LCDC_REG + 0)
+	or	a, #0x01
+	ldh	(_LCDC_REG + 0), a
+;main.c:41: SHOW_SPRITES;
 	ldh	a, (_LCDC_REG + 0)
 	or	a, #0x02
 	ldh	(_LCDC_REG + 0), a
-;main.c:43: SpawnSprites();
-;main.c:59: }
+;main.c:43: set_bkg_data(0, 1, BKGtile);
+	ld	de, #_BKGtile
+	push	de
+	xor	a, a
+	inc	a
+	push	af
+	call	_set_bkg_data
+	add	sp, #4
+;main.c:44: init_bkg(0);
+	xor	a, a
+	push	af
+	inc	sp
+	call	_init_bkg
+	inc	sp
+;main.c:46: SpawnSprites();
+;main.c:62: }
 	jp	_SpawnSprites
 _BKGtile:
 	.db #0xff	; 255
@@ -113,30 +133,30 @@ _Wine:
 	.db #0x18	; 24
 	.db #0x3c	; 60
 	.db #0x3c	; 60
-;main.c:61: void SpawnSprites(){
+;main.c:64: void SpawnSprites(){
 ;	---------------------------------
 ; Function SpawnSprites
 ; ---------------------------------
 _SpawnSprites::
-;main.c:65: set_sprite_data(0, 0, Wine);
+;main.c:68: set_sprite_data(0, 1, Wine);
 	ld	de, #_Wine
 	push	de
 	xor	a, a
-	rrca
+	inc	a
 	push	af
 	call	_set_sprite_data
 	add	sp, #4
-;main.c:66: set_sprite_data(1, 0, pint);
+;main.c:69: set_sprite_data(1, 1, pint);
 	ld	de, #_pint
 	push	de
-	ld	hl, #0x01
+	ld	hl, #0x101
 	push	hl
 	call	_set_sprite_data
 	add	sp, #4
-;main.c:67: set_sprite_data(2, 0, character);
+;main.c:70: set_sprite_data(2, 1, character);
 	ld	de, #_character
 	push	de
-	xor	a, a
+	ld	a, #0x01
 	push	af
 	inc	sp
 	ld	a, #0x02
@@ -169,12 +189,12 @@ _SpawnSprites::
 	ld	(hl), #0x96
 	inc	hl
 	ld	(hl), #0x96
-;main.c:78: while (1) {
+;main.c:81: while (1) {
 00107$:
-;main.c:79: uint8_t buttons = joypad();
+;main.c:82: uint8_t buttons = joypad();
 	call	_joypad
 	ld	c, a
-;main.c:80: uint8_t moveX = 0;
+;main.c:83: uint8_t moveX = 0;
 	ld	e, #0x00
 ;c:\gbdk\include\gb\gb.h:1893: OAM_item_t * itm = &shadow_OAM[nb];
 	ld	hl, #_shadow_OAM
@@ -192,17 +212,17 @@ _SpawnSprites::
 	ld	(hl+), a
 	ld	a, (hl)
 	ld	(hl), a
-;main.c:89: if (buttons & J_LEFT){
+;main.c:92: if (buttons & J_LEFT){
 	bit	1, c
 	jr	Z, 00104$
-;main.c:90: moveX = -1;
+;main.c:93: moveX = -1;
 	ld	e, #0xff
 	jr	00105$
 00104$:
-;main.c:92: else if (buttons & J_RIGHT){
+;main.c:95: else if (buttons & J_RIGHT){
 	bit	0, c
 	jr	Z, 00105$
-;main.c:93: moveX = 1;
+;main.c:96: moveX = 1;
 	ld	e, #0x01
 00105$:
 ;c:\gbdk\include\gb\gb.h:1893: OAM_item_t * itm = &shadow_OAM[nb];
@@ -214,9 +234,9 @@ _SpawnSprites::
 	ld	a, (bc)
 	add	a, e
 	ld	(bc), a
-;main.c:100: wait_vbl_done();
+;main.c:103: wait_vbl_done();
 	call	_wait_vbl_done
-;main.c:106: }
+;main.c:109: }
 	jr	00107$
 	.area _CODE
 	.area _INITIALIZER

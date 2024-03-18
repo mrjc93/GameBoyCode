@@ -5,8 +5,9 @@
 
 
 
-/// notes on where I'm currently at, there's something wrong with the way I'm loading in sprites into VRAM, I will try and identify the problem and fix it
+/// setting the second parameter in set_sprite_data to 0 means 256 tiles (the second parameter = amount of tiles)
 /// after I've managed to identify this problem I will attempt making the background sprite load as well
+// once I'm in a better position I will move onto the next stage of development, namely, sprite collisions
 
 
 const unsigned char BKGtile[] =
@@ -36,10 +37,11 @@ unsigned char character[] =
 void main(){
 
    
-
+SHOW_BKG;
 SHOW_SPRITES;
 
-
+set_bkg_data(0, 1, BKGtile);
+init_bkg(0);
 
 SpawnSprites();
 
@@ -63,9 +65,9 @@ void SpawnSprites(){
 
    
 //spawn all sprites in
-set_sprite_data(0, 0, Wine);
-set_sprite_data(1, 0, pint);
-set_sprite_data(2, 0, character);
+set_sprite_data(0, 1, Wine);
+set_sprite_data(1, 1, pint);
+set_sprite_data(2, 1, character);
 
 set_sprite_tile(0, 0);
 set_sprite_tile(1, 1);
