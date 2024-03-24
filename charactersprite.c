@@ -1,6 +1,6 @@
 /*
 
- EXPORT.C
+ CHARACTERSPRITE.C
 
  Tile Source File.
 
@@ -59,4 +59,4 @@ unsigned char charactersprite[] =
   0x00,0x00,0x00,0x00,0x80,0x80,0x80,0x80
 };
 
-/* End of EXPORT.C */
+/* End of CHARACTERSPRITE.C */

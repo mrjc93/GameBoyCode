@@ -1,6 +1,6 @@
 /*
 
- EXPORT.H
+ CHARACTERSPRITE.H
 
  Include File.
 
@@ -28,4 +28,4 @@
 /* Start of tile array. */
 extern unsigned char charactersprite[];
 
-/* End of EXPORT.H */
+/* End of CHARACTERSPRITE.H */

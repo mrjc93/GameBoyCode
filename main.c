@@ -3,13 +3,16 @@
 #include <stdlib.h>
 #include "backgroundmap.c"
 #include "backgroundtiles.c"
-
-
+#include <rand.h>
+#include <time.h>
+#include "spritestructs.h"
 
 /// setting the second parameter in set_sprite_data to 0 means 256 tiles (the second parameter = amount of tiles)
 
-// once I'm in a better position I will move onto the next stage of development, namely, sprite collisions
+// I need to figure out how to get a RNG into my code
 
+
+Sprite wineglass;
 
 const unsigned char BKGtile[] =
 {
@@ -35,79 +38,75 @@ unsigned char character[] =
   0x18,0x18,0x3C,0x3C,0x18,0x18,0x24,0x24
 };
 
-void main(){
-
-   
-SHOW_BKG;
-SHOW_SPRITES;
+void setBackground(void){
 
 set_bkg_data(0, 18, BackgroundTiles);
 set_bkg_tiles(0, 0, 20, 18, backgroundmap);
 
-SpawnSprites();
-
-     
-
-
-
-
-  
-
-
-
-
-
-
-
 
 }
 
-void SpawnSprites(){
-
-   
-//spawn all sprites in
+void loadSprites(void)
+{
 set_sprite_data(0, 1, Wine);
-set_sprite_data(1, 1, pint);
-set_sprite_data(2, 1, character);
+set_sprite_data(1, 1, character);
 
-set_sprite_tile(0, 0);
 set_sprite_tile(1, 1);
-set_sprite_tile(2, 2);
+set_sprite_tile(2, 1);
 
-move_sprite(0, 70, 30);
-move_sprite(1, 30, 30);
-move_sprite(2, 150, 140);
+}
 
 
-while (1) {
-uint8_t buttons = joypad();
-uint8_t moveX = 0;
-
-
- //handle falling sprites
+void spriteFall(void)
+{
 scroll_sprite(0, 0, 1);
-scroll_sprite(1, 0, 1);
+wait_vbl_done();
 
+}
 
-//handle player controls
+void playerMovement(void)
+{
+int8_t moveX = 0;
+uint8_t buttons = joypad();
+
 if (buttons & J_LEFT){
    moveX = -1;
 }
-else if (buttons & J_RIGHT){
+if (buttons & J_RIGHT){
    moveX = 1;
 }
 
-scroll_sprite(2, moveX, 0);
+scroll_sprite(1, moveX, 0);
+}
+
+void main(void)
+{
 
 
-// update per frame
-wait_vbl_done();
+DISPLAY_ON;
+SHOW_BKG;
+SHOW_SPRITES;
+
+setBackground();
+loadSprites();
+
+move_sprite(1, 80, 150); 
+setupSprites(&wineglass, 0, 1, 1, 1, 1, 0, 30, 30, 0, 0, Wine);
+
+moveSprite(&wineglass, 30, 30);
+
+while (1) {
+
+spriteFall();
+playerMovement();
+
+
 
 
 }
 
-
 }
+
 
 
 
