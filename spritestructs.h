@@ -83,34 +83,6 @@ for (uint8_t i = 0; i != spriteCount; i++)
 
 }
 
-void playerMovement(Sprite *sprite)
-{
-
-   
-int8_t moveX = 0;
-uint8_t buttons = joypad();
-
-uint8_t index = sprite->spriteID;
-    
-
-    uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
-
-
-if (buttons & J_LEFT){
-   moveX = -1;
-}
-if (buttons & J_RIGHT){
-   moveX = 1;
-}
-
-for (uint8_t i = 0; i != spriteCount; i++)
-    {
-        scroll_sprite(sprite->tilesetStart + i, moveX, 0);
-    }
-}
-
-
-
 
 
 

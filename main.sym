@@ -10,6 +10,7 @@ Symbol Table
   2 _BackgroundTiles                                               000168 GR
   2 _Bartender                                                     000298 GR
     _LCDC_REG                                                      ****** GX
+  0 _LoadCharacterFrame                                            00028E GR
   0 _LoadSpriteFrame                                               000000 GR
   2 _Wine                                                          0002D8 GR
     __muluchar                                                     ****** GX
@@ -20,16 +21,18 @@ Symbol Table
   2 _backgroundmap                                                 000000 GR
   1 _bartender                                                     00000C GR
     _joypad                                                        ****** GX
-  0 _loadSprites                                                   000300 GR
-  0 _main                                                          00031A GR
+  0 _loadSprites                                                   00044D GR
+  0 _main                                                          000467 GR
+  0 _moveCharacter                                                 0002DF GR
   0 _moveSprite                                                    000051 GR
-  0 _playerMovement                                                00022A GR
+  0 _playerMovement                                                00037F GR
   0 _scrollSprite                                                  0000F1 GR
-  0 _setBackground                                                 0002E2 GR
+  0 _setBackground                                                 00042F GR
     _set_bkg_data                                                  ****** GX
     _set_bkg_tiles                                                 ****** GX
     _set_sprite_data                                               ****** GX
-  0 _setupSprites                                                  00027E GR
+  0 _setupCharacter                                                0003D3 GR
+  0 _setupSprites                                                  00022A GR
     _shadow_OAM                                                    ****** GX
     _wait_vbl_done                                                 ****** GX
   1 _wineglass                                                     000000 GR
@@ -39,7 +42,7 @@ Hexadecimal [24-Bits]
 
 Area Table
 
-   0 _CODE                                      size    38F   flags    0
+   0 _CODE                                      size    4DC   flags    0
    1 _DATA                                      size     18   flags    0
    2 _INITIALIZED                               size    2E8   flags    0
    3 _DABS                                      size      0   flags    8

@@ -8,13 +8,14 @@
 #include "spritestructs.h"
 #include "Bartender.c"
 #include "wine.c"
+#include "characterstruct.c"
 /// setting the second parameter in set_sprite_data to 0 means 256 tiles (the second parameter = amount of tiles)
 
 // I need to figure out how to get a RNG into my code
 
 
 Sprite wineglass;
-Sprite bartender;
+Character bartender;
 
 void setBackground(void){
 
@@ -46,12 +47,12 @@ SHOW_SPRITES;
 setBackground();
 loadSprites();
 
-setupSprites(&bartender, 1, 2, 2, 4, 1, 30, 30, 0, 0, Bartender);
+setupCharacter(&bartender, 1, 2, 2, 4, 1, 30, 30, 0, 0, Bartender);
 setupSprites(&wineglass, 0, 1, 1, 1, 0, 30, 30, 0, 0, Wine);
 
 
 moveSprite(&wineglass, 20, 30);
-moveSprite(&bartender, 80, 140);
+moveCharacter(&bartender, 80, 140);
 
 
 while (1) {
