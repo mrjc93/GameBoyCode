@@ -6,6 +6,7 @@
 #include <rand.h>
 #include <time.h>
 #include "spritestructs.h"
+#include "Bartender.c"
 
 /// setting the second parameter in set_sprite_data to 0 means 256 tiles (the second parameter = amount of tiles)
 
@@ -13,7 +14,11 @@
 
 
 Sprite wineglass;
+Sprite bartender;
 
+uint8_t moveY= 1;
+uint8_t moveX= 0;
+uint8_t yBounds = 0;
 const unsigned char BKGtile[] =
 {
   0xFF,0x00,0x81,0x7E,0xBD,0x42,0xA5,0x5A,
@@ -49,22 +54,15 @@ set_bkg_tiles(0, 0, 20, 18, backgroundmap);
 void loadSprites(void)
 {
 set_sprite_data(0, 1, Wine);
-set_sprite_data(1, 1, character);
+set_sprite_data(1, 4, Bartender);
 
-set_sprite_tile(1, 1);
-set_sprite_tile(2, 1);
 
 }
 
 
-void spriteFall(void)
-{
-scroll_sprite(0, 0, 1);
-wait_vbl_done();
 
-}
 
-void playerMovement(void)
+/*void playerMovement(void)
 {
 int8_t moveX = 0;
 uint8_t buttons = joypad();
@@ -75,32 +73,35 @@ if (buttons & J_LEFT){
 if (buttons & J_RIGHT){
    moveX = 1;
 }
+*/
 
-scroll_sprite(1, moveX, 0);
-}
+
 
 void main(void)
 {
 
 
-DISPLAY_ON;
+//DISPLAY_ON;
 SHOW_BKG;
 SHOW_SPRITES;
 
 setBackground();
 loadSprites();
 
-move_sprite(1, 80, 150); 
-setupSprites(&wineglass, 0, 1, 1, 1, 1, 0, 30, 30, 0, 0, Wine);
+setupSprites(&bartender, 1, 2, 2, 4, 1, 30, 30, 0, 0, Bartender);
+setupSprites(&wineglass, 0, 1, 1, 1, 0, 30, 30, 0, 0, Wine);
 
-moveSprite(&wineglass, 30, 30);
+
+moveSprite(&wineglass, 20, 30);
+moveSprite(&bartender, 80, 140);
+
 
 while (1) {
 
-spriteFall();
-playerMovement();
+playerMovement(&bartender);
 
-
+scrollSprite(&wineglass, moveX, moveY);
+wait_vbl_done();
 
 
 }

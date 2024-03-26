@@ -7,45 +7,54 @@ Symbol Table
     .__.ABS.                                                    =  000000 G
     .__.CPU.                                                    =  000000 L
     .__.H$L.                                                    =  000000 L
-  0 _BKGtile                                                       00013E GR
+  0 _BKGtile                                                       000300 GR
   2 _BackgroundTiles                                               000168 GR
+  2 _Bartender                                                     000298 GR
     _LCDC_REG                                                      ****** GX
   0 _LoadSpriteFrame                                               000000 GR
-  0 _Wine                                                          00015E GR
+  0 _Wine                                                          000320 GR
     __muluchar                                                     ****** GX
   7 __xinit__BackgroundTiles                                       000168 R
+  7 __xinit__Bartender                                             000298 R
   7 __xinit__backgroundmap                                         000000 R
-  7 __xinit__character                                             000298 R
+  7 __xinit__character                                             0002DB R
+  7 __xinit__moveX                                                 0002D9 R
+  7 __xinit__moveY                                                 0002D8 R
+  7 __xinit__yBounds                                               0002DA R
   2 _backgroundmap                                                 000000 GR
-  2 _character                                                     000298 GR
+  1 _bartender                                                     00000C GR
+  2 _character                                                     0002DB GR
     _joypad                                                        ****** GX
-  0 _loadSprites                                                   00016E GR
-  0 _main                                                          0001B8 GR
-  0 _moveSprite                                                    000018 GR
-  0 _pint                                                          00014E GR
-  0 _playerMovement                                                00019E GR
-  0 _setBackground                                                 000120 GR
+  0 _loadSprites                                                   000330 GR
+  0 _main                                                          00034A GR
+  0 _moveSprite                                                    000051 GR
+  2 _moveX                                                         0002D9 GR
+  2 _moveY                                                         0002D8 GR
+  0 _pint                                                          000310 GR
+  0 _playerMovement                                                00022A GR
+  0 _scrollSprite                                                  0000F1 GR
+  0 _setBackground                                                 0002E2 GR
     _set_bkg_data                                                  ****** GX
     _set_bkg_tiles                                                 ****** GX
     _set_sprite_data                                               ****** GX
-  0 _setupSprites                                                  0000B2 GR
+  0 _setupSprites                                                  00027E GR
     _shadow_OAM                                                    ****** GX
-  0 _spriteFall                                                    000192 GR
     _wait_vbl_done                                                 ****** GX
   1 _wineglass                                                     000000 GR
+  2 _yBounds                                                       0002DA GR
 
 ASxxxx Assembler V02.00 + NoICE + SDCC mods  (GameBoy)                  Page 2
 Hexadecimal [24-Bits]
 
 Area Table
 
-   0 _CODE                                      size    20B   flags    0
-   1 _DATA                                      size      C   flags    0
-   2 _INITIALIZED                               size    2A8   flags    0
+   0 _CODE                                      size    3C2   flags    0
+   1 _DATA                                      size     18   flags    0
+   2 _INITIALIZED                               size    2EB   flags    0
    3 _DABS                                      size      0   flags    8
    4 _HOME                                      size      0   flags    0
    5 _GSINIT                                    size      0   flags    0
    6 _GSFINAL                                   size      0   flags    0
-   7 _INITIALIZER                               size    2A8   flags    0
+   7 _INITIALIZER                               size    2EB   flags    0
    8 _CABS                                      size      0   flags    8
 

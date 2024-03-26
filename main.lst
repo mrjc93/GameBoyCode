@@ -9,11 +9,11 @@
                                       9 ; Public variables in this module
                                      10 ;--------------------------------------------------------
                                      11 	.globl _main
-                                     12 	.globl _playerMovement
-                                     13 	.globl _spriteFall
-                                     14 	.globl _loadSprites
-                                     15 	.globl _setBackground
-                                     16 	.globl _setupSprites
+                                     12 	.globl _loadSprites
+                                     13 	.globl _setBackground
+                                     14 	.globl _setupSprites
+                                     15 	.globl _playerMovement
+                                     16 	.globl _scrollSprite
                                      17 	.globl _moveSprite
                                      18 	.globl _LoadSpriteFrame
                                      19 	.globl _set_sprite_data
@@ -22,1224 +22,1677 @@
                                      22 	.globl _wait_vbl_done
                                      23 	.globl _joypad
                                      24 	.globl _character
-                                     25 	.globl _BackgroundTiles
-                                     26 	.globl _backgroundmap
-                                     27 	.globl _wineglass
-                                     28 	.globl _Wine
-                                     29 	.globl _pint
-                                     30 	.globl _BKGtile
-                                     31 ;--------------------------------------------------------
-                                     32 ; special function registers
-                                     33 ;--------------------------------------------------------
-                                     34 ;--------------------------------------------------------
-                                     35 ; ram data
+                                     25 	.globl _yBounds
+                                     26 	.globl _moveX
+                                     27 	.globl _moveY
+                                     28 	.globl _Bartender
+                                     29 	.globl _BackgroundTiles
+                                     30 	.globl _backgroundmap
+                                     31 	.globl _bartender
+                                     32 	.globl _wineglass
+                                     33 	.globl _Wine
+                                     34 	.globl _pint
+                                     35 	.globl _BKGtile
                                      36 ;--------------------------------------------------------
-                                     37 	.area _DATA
-      000000                         38 _wineglass::
-      000000                         39 	.ds 12
-                                     40 ;--------------------------------------------------------
-                                     41 ; ram data
-                                     42 ;--------------------------------------------------------
-                                     43 	.area _INITIALIZED
-      000000                         44 _backgroundmap::
-      000000                         45 	.ds 360
-      000168                         46 _BackgroundTiles::
-      000168                         47 	.ds 304
-      000298                         48 _character::
-      000298                         49 	.ds 16
-                                     50 ;--------------------------------------------------------
-                                     51 ; absolute external ram data
-                                     52 ;--------------------------------------------------------
-                                     53 	.area _DABS (ABS)
-                                     54 ;--------------------------------------------------------
-                                     55 ; global & static initialisations
-                                     56 ;--------------------------------------------------------
-                                     57 	.area _HOME
-                                     58 	.area _GSINIT
-                                     59 	.area _GSFINAL
-                                     60 	.area _GSINIT
-                                     61 ;--------------------------------------------------------
-                                     62 ; Home
-                                     63 ;--------------------------------------------------------
-                                     64 	.area _HOME
-                                     65 	.area _HOME
-                                     66 ;--------------------------------------------------------
-                                     67 ; code
-                                     68 ;--------------------------------------------------------
-                                     69 	.area _CODE
-                                     70 ;spritestructs.h:31: void LoadSpriteFrame(Sprite *sprite, uint8_t frame)
-                                     71 ;	---------------------------------
-                                     72 ; Function LoadSpriteFrame
-                                     73 ; ---------------------------------
-      000000                         74 _LoadSpriteFrame::
-      000000 4F               [ 4]   75 	ld	c, a
-                                     76 ;spritestructs.h:33: sprite->spritecurrentFrame = frame;
-      000001 21 04 00         [12]   77 	ld	hl, #0x0004
-      000004 19               [ 8]   78 	add	hl, de
-      000005 71               [ 8]   79 	ld	(hl), c
-                                     80 ;spritestructs.h:35: uint8_t spriteCount = sprite->spriteWidth * sprite->spriteHeight;
-      000006 6B               [ 4]   81 	ld	l, e
-                                     82 ;	spillPairReg hl
-                                     83 ;	spillPairReg hl
-      000007 62               [ 4]   84 	ld	h, d
-                                     85 ;	spillPairReg hl
-                                     86 ;	spillPairReg hl
-      000008 23               [ 8]   87 	inc	hl
-      000009 23               [ 8]   88 	inc	hl
-      00000A 4E               [ 8]   89 	ld	c, (hl)
-      00000B 13               [ 8]   90 	inc	de
-      00000C 1A               [ 8]   91 	ld	a, (de)
-      00000D 5F               [ 4]   92 	ld	e, a
-      00000E 79               [ 4]   93 	ld	a, c
-                                     94 ;spritestructs.h:37: for (uint8_t i = 0; i != spriteCount; i++, sprite->tileset[sprite-> tilesetStart + i + (frame * spriteCount)]);
-      00000F CDr00r00         [24]   95 	call	__muluchar
-      000012 AF               [ 4]   96 	xor	a, a
-      000013                         97 00103$:
-      000013 B9               [ 4]   98 	cp	a, c
-      000014 C8               [20]   99 	ret	Z
-      000015 3C               [ 4]  100 	inc	a
-                                    101 ;spritestructs.h:38: }
-      000016 18 FB            [12]  102 	jr	00103$
-                                    103 ;spritestructs.h:40: void moveSprite (Sprite *sprite, uint8_t x, uint8_t y)
-                                    104 ;	---------------------------------
-                                    105 ; Function moveSprite
-                                    106 ; ---------------------------------
-      000018                        107 _moveSprite::
-      000018 E8 FA            [16]  108 	add	sp, #-6
-      00001A F8 02            [12]  109 	ldhl	sp,	#2
-      00001C 73               [ 8]  110 	ld	(hl), e
-      00001D 23               [ 8]  111 	inc	hl
-      00001E 72               [ 8]  112 	ld	(hl), d
-      00001F 2B               [ 8]  113 	dec	hl
-      000020 2B               [ 8]  114 	dec	hl
-                                    115 ;spritestructs.h:42: sprite->x = x;
-      000021 22               [ 8]  116 	ld	(hl+), a
-      000022 2A               [ 8]  117 	ld	a, (hl+)
-      000023 5F               [ 4]  118 	ld	e, a
-      000024 56               [ 8]  119 	ld	d, (hl)
-      000025 21 06 00         [12]  120 	ld	hl, #0x0006
-      000028 19               [ 8]  121 	add	hl, de
-      000029 4D               [ 4]  122 	ld	c, l
-      00002A 44               [ 4]  123 	ld	b, h
-      00002B F8 01            [12]  124 	ldhl	sp,	#1
-                                    125 ;spritestructs.h:43: sprite->y = y;
-      00002D 2A               [ 8]  126 	ld	a, (hl+)
-      00002E 02               [ 8]  127 	ld	(bc), a
-      00002F 2A               [ 8]  128 	ld	a, (hl+)
-      000030 5F               [ 4]  129 	ld	e, a
-      000031 56               [ 8]  130 	ld	d, (hl)
-      000032 21 07 00         [12]  131 	ld	hl, #0x0007
-      000035 19               [ 8]  132 	add	hl, de
-      000036 4D               [ 4]  133 	ld	c, l
-      000037 44               [ 4]  134 	ld	b, h
-      000038 F8 08            [12]  135 	ldhl	sp,	#8
-      00003A 7E               [ 8]  136 	ld	a, (hl)
-      00003B 02               [ 8]  137 	ld	(bc), a
-                                    138 ;spritestructs.h:45: for (uint8_t iy = 0; iy!= sprite->spriteWidth; iy++)
-      00003C F8 02            [12]  139 	ldhl	sp,	#2
-      00003E 2A               [ 8]  140 	ld	a, (hl+)
-      00003F 4F               [ 4]  141 	ld	c, a
-      000040 2A               [ 8]  142 	ld	a, (hl+)
-      000041 47               [ 4]  143 	ld	b, a
-      000042 03               [ 8]  144 	inc	bc
-      000043 03               [ 8]  145 	inc	bc
-      000044 36 00            [12]  146 	ld	(hl), #0x00
-      000046                        147 00108$:
-      000046 0A               [ 8]  148 	ld	a, (bc)
-      000047 5F               [ 4]  149 	ld	e, a
-      000048 F8 04            [12]  150 	ldhl	sp,	#4
-      00004A 7E               [ 8]  151 	ld	a, (hl)
-      00004B 93               [ 4]  152 	sub	a, e
-      00004C 28 5F            [12]  153 	jr	Z, 00110$
-                                    154 ;spritestructs.h:47: for (uint8_t ix = 0; ix!= sprite->spriteWidth; ix++)
-      00004E F8 05            [12]  155 	ldhl	sp,	#5
-      000050 36 00            [12]  156 	ld	(hl), #0x00
-      000052                        157 00105$:
-      000052 0A               [ 8]  158 	ld	a, (bc)
-      000053 F8 00            [12]  159 	ldhl	sp,	#0
-      000055 77               [ 8]  160 	ld	(hl), a
-      000056 F8 05            [12]  161 	ldhl	sp,	#5
-      000058 7E               [ 8]  162 	ld	a, (hl)
-      000059 F8 00            [12]  163 	ldhl	sp,	#0
-      00005B 96               [ 8]  164 	sub	a, (hl)
-      00005C 28 4A            [12]  165 	jr	Z, 00109$
-                                    166 ;spritestructs.h:49: uint8_t index = sprite->spriteID + ix + (iy * sprite->spriteWidth);
-      00005E F8 02            [12]  167 	ldhl	sp,#2
-      000060 2A               [ 8]  168 	ld	a, (hl+)
-      000061 5F               [ 4]  169 	ld	e, a
-      000062 2A               [ 8]  170 	ld	a, (hl+)
-      000063 23               [ 8]  171 	inc	hl
-      000064 57               [ 4]  172 	ld	d, a
-      000065 1A               [ 8]  173 	ld	a, (de)
-      000066 86               [ 8]  174 	add	a, (hl)
-      000067 57               [ 4]  175 	ld	d, a
-      000068 C5               [16]  176 	push	bc
-      000069 D5               [16]  177 	push	de
-      00006A F8 04            [12]  178 	ldhl	sp,	#4
-      00006C 5E               [ 8]  179 	ld	e, (hl)
-      00006D F8 08            [12]  180 	ldhl	sp,	#8
-      00006F 7E               [ 8]  181 	ld	a, (hl)
-      000070 CDr00r00         [24]  182 	call	__muluchar
-      000073 79               [ 4]  183 	ld	a, c
-      000074 D1               [12]  184 	pop	de
-      000075 C1               [12]  185 	pop	bc
-      000076 82               [ 4]  186 	add	a, d
-      000077 57               [ 4]  187 	ld	d, a
-                                    188 ;spritestructs.h:51: move_sprite(index, x + (ix * 8), y + (iy * 8));
-      000078 F8 04            [12]  189 	ldhl	sp,	#4
-      00007A 7E               [ 8]  190 	ld	a, (hl)
-      00007B 87               [ 4]  191 	add	a, a
-      00007C 87               [ 4]  192 	add	a, a
-      00007D 87               [ 4]  193 	add	a, a
-      00007E F8 08            [12]  194 	ldhl	sp,	#8
-      000080 5E               [ 8]  195 	ld	e, (hl)
-      000081 83               [ 4]  196 	add	a, e
-      000082 5F               [ 4]  197 	ld	e, a
-      000083 F8 05            [12]  198 	ldhl	sp,	#5
-      000085 7E               [ 8]  199 	ld	a, (hl)
-      000086 87               [ 4]  200 	add	a, a
-      000087 87               [ 4]  201 	add	a, a
-      000088 87               [ 4]  202 	add	a, a
-      000089 F8 01            [12]  203 	ldhl	sp,	#1
-      00008B 6E               [ 8]  204 	ld	l, (hl)
-                                    205 ;	spillPairReg hl
-                                    206 ;	spillPairReg hl
-      00008C 85               [ 4]  207 	add	a, l
-      00008D F8 00            [12]  208 	ldhl	sp,	#0
-      00008F 77               [ 8]  209 	ld	(hl), a
-                                    210 ;c:\gbdk\include\gb\gb.h:1877: OAM_item_t * itm = &shadow_OAM[nb];
-      000090 26 00            [ 8]  211 	ld	h, #0x00
-                                    212 ;	spillPairReg hl
-                                    213 ;	spillPairReg hl
-      000092 6A               [ 4]  214 	ld	l, d
-      000093 29               [ 8]  215 	add	hl, hl
-      000094 29               [ 8]  216 	add	hl, hl
-      000095 D5               [16]  217 	push	de
-      000096 11r00r00         [12]  218 	ld	de, #_shadow_OAM
-      000099 19               [ 8]  219 	add	hl, de
-      00009A D1               [12]  220 	pop	de
-                                    221 ;c:\gbdk\include\gb\gb.h:1878: itm->y=y, itm->x=x;
-      00009B 7B               [ 4]  222 	ld	a, e
-      00009C 22               [ 8]  223 	ld	(hl+), a
-      00009D 5D               [ 4]  224 	ld	e, l
-      00009E 54               [ 4]  225 	ld	d, h
-      00009F F8 00            [12]  226 	ldhl	sp,	#0
-      0000A1 7E               [ 8]  227 	ld	a, (hl)
-      0000A2 12               [ 8]  228 	ld	(de), a
-                                    229 ;spritestructs.h:47: for (uint8_t ix = 0; ix!= sprite->spriteWidth; ix++)
-      0000A3 F8 05            [12]  230 	ldhl	sp,	#5
-      0000A5 34               [12]  231 	inc	(hl)
-      0000A6 18 AA            [12]  232 	jr	00105$
-      0000A8                        233 00109$:
-                                    234 ;spritestructs.h:45: for (uint8_t iy = 0; iy!= sprite->spriteWidth; iy++)
-      0000A8 F8 04            [12]  235 	ldhl	sp,	#4
-      0000AA 34               [12]  236 	inc	(hl)
-      0000AB 18 99            [12]  237 	jr	00108$
-      0000AD                        238 00110$:
-                                    239 ;spritestructs.h:54: }
-      0000AD E8 06            [16]  240 	add	sp, #6
-      0000AF E1               [12]  241 	pop	hl
-      0000B0 33               [ 8]  242 	inc	sp
-      0000B1 E9               [ 4]  243 	jp	(hl)
-                                    244 ;spritestructs.h:56: void setupSprites(Sprite *sprite, uint8_t spriteID, int8_t spriteHeight, uint8_t spriteWidth, uint8_t spriteFrames, uint8_t spritecurrentFrame, uint8_t tilesetStart, uint8_t x, uint8_t y,
-                                    245 ;	---------------------------------
-                                    246 ; Function setupSprites
-                                    247 ; ---------------------------------
-      0000B2                        248 _setupSprites::
-      0000B2 3B               [ 8]  249 	dec	sp
-      0000B3 F8 00            [12]  250 	ldhl	sp,	#0
-      0000B5 77               [ 8]  251 	ld	(hl), a
-                                    252 ;spritestructs.h:59: sprite->tileset = tileset;
-      0000B6 21 0A 00         [12]  253 	ld	hl, #0x000a
-      0000B9 19               [ 8]  254 	add	hl, de
-      0000BA 4D               [ 4]  255 	ld	c, l
-      0000BB 44               [ 4]  256 	ld	b, h
-      0000BC F8 0C            [12]  257 	ldhl	sp,	#12
-      0000BE 2A               [ 8]  258 	ld	a, (hl+)
-      0000BF 02               [ 8]  259 	ld	(bc), a
-      0000C0 03               [ 8]  260 	inc	bc
-      0000C1 7E               [ 8]  261 	ld	a, (hl)
-      0000C2 02               [ 8]  262 	ld	(bc), a
-                                    263 ;spritestructs.h:60: sprite->tilesetStart = tilesetStart;
-      0000C3 21 05 00         [12]  264 	ld	hl, #0x0005
-      0000C6 19               [ 8]  265 	add	hl, de
-      0000C7 4D               [ 4]  266 	ld	c, l
-      0000C8 44               [ 4]  267 	ld	b, h
-      0000C9 F8 07            [12]  268 	ldhl	sp,	#7
-      0000CB 7E               [ 8]  269 	ld	a, (hl)
-      0000CC 02               [ 8]  270 	ld	(bc), a
-                                    271 ;spritestructs.h:61: sprite->spriteID = spriteID;
-      0000CD F8 00            [12]  272 	ldhl	sp,	#0
-      0000CF 7E               [ 8]  273 	ld	a, (hl)
-      0000D0 12               [ 8]  274 	ld	(de), a
-                                    275 ;spritestructs.h:62: sprite->spriteHeight = spriteHeight;
-      0000D1 4B               [ 4]  276 	ld	c, e
-      0000D2 42               [ 4]  277 	ld	b, d
-      0000D3 03               [ 8]  278 	inc	bc
-      0000D4 F8 03            [12]  279 	ldhl	sp,	#3
-                                    280 ;spritestructs.h:63: sprite->spriteWidth = spriteWidth;
-      0000D6 2A               [ 8]  281 	ld	a, (hl+)
-      0000D7 02               [ 8]  282 	ld	(bc), a
-      0000D8 4B               [ 4]  283 	ld	c, e
-      0000D9 42               [ 4]  284 	ld	b, d
-      0000DA 03               [ 8]  285 	inc	bc
-      0000DB 03               [ 8]  286 	inc	bc
-                                    287 ;spritestructs.h:64: sprite->spriteFrames = spriteFrames;
-      0000DC 2A               [ 8]  288 	ld	a, (hl+)
-      0000DD 02               [ 8]  289 	ld	(bc), a
-      0000DE 4B               [ 4]  290 	ld	c, e
-      0000DF 42               [ 4]  291 	ld	b, d
-      0000E0 03               [ 8]  292 	inc	bc
-      0000E1 03               [ 8]  293 	inc	bc
-      0000E2 03               [ 8]  294 	inc	bc
-      0000E3 7E               [ 8]  295 	ld	a, (hl)
-      0000E4 02               [ 8]  296 	ld	(bc), a
-                                    297 ;spritestructs.h:65: sprite->spritecurrentFrame = spritecurrentFrame;
-      0000E5 21 04 00         [12]  298 	ld	hl, #0x0004
-      0000E8 19               [ 8]  299 	add	hl, de
-      0000E9 4D               [ 4]  300 	ld	c, l
-      0000EA 44               [ 4]  301 	ld	b, h
-      0000EB F8 06            [12]  302 	ldhl	sp,	#6
-      0000ED 7E               [ 8]  303 	ld	a, (hl)
-      0000EE 02               [ 8]  304 	ld	(bc), a
-                                    305 ;spritestructs.h:66: sprite->x = x;
-      0000EF 21 06 00         [12]  306 	ld	hl, #0x0006
-      0000F2 19               [ 8]  307 	add	hl, de
-      0000F3 4D               [ 4]  308 	ld	c, l
-      0000F4 44               [ 4]  309 	ld	b, h
-      0000F5 F8 08            [12]  310 	ldhl	sp,	#8
-      0000F7 7E               [ 8]  311 	ld	a, (hl)
-      0000F8 02               [ 8]  312 	ld	(bc), a
-                                    313 ;spritestructs.h:67: sprite->y = y;
-      0000F9 21 07 00         [12]  314 	ld	hl, #0x0007
-      0000FC 19               [ 8]  315 	add	hl, de
-      0000FD 4D               [ 4]  316 	ld	c, l
-      0000FE 44               [ 4]  317 	ld	b, h
-      0000FF F8 09            [12]  318 	ldhl	sp,	#9
-      000101 7E               [ 8]  319 	ld	a, (hl)
-      000102 02               [ 8]  320 	ld	(bc), a
-                                    321 ;spritestructs.h:68: sprite->velocityX = velocityX;
-      000103 21 08 00         [12]  322 	ld	hl, #0x0008
-      000106 19               [ 8]  323 	add	hl, de
-      000107 4D               [ 4]  324 	ld	c, l
-      000108 44               [ 4]  325 	ld	b, h
-      000109 F8 0A            [12]  326 	ldhl	sp,	#10
-      00010B 7E               [ 8]  327 	ld	a, (hl)
-      00010C 02               [ 8]  328 	ld	(bc), a
-                                    329 ;spritestructs.h:69: sprite->velocityY = velocityY;
-      00010D 21 09 00         [12]  330 	ld	hl, #0x0009
-      000110 19               [ 8]  331 	add	hl, de
-      000111 4D               [ 4]  332 	ld	c, l
-      000112 44               [ 4]  333 	ld	b, h
-      000113 F8 0B            [12]  334 	ldhl	sp,	#11
-      000115 7E               [ 8]  335 	ld	a, (hl)
-      000116 02               [ 8]  336 	ld	(bc), a
-                                    337 ;spritestructs.h:71: LoadSpriteFrame(sprite, 0);
-      000117 AF               [ 4]  338 	xor	a, a
-      000118 CDr00r00         [24]  339 	call	_LoadSpriteFrame
-                                    340 ;spritestructs.h:78: }
-      00011B 33               [ 8]  341 	inc	sp
-      00011C E1               [12]  342 	pop	hl
-      00011D E8 0B            [16]  343 	add	sp, #11
-      00011F E9               [ 4]  344 	jp	(hl)
-                                    345 ;main.c:41: void setBackground(void){
-                                    346 ;	---------------------------------
-                                    347 ; Function setBackground
-                                    348 ; ---------------------------------
-      000120                        349 _setBackground::
-                                    350 ;main.c:43: set_bkg_data(0, 18, BackgroundTiles);
-      000120 11r68r01         [12]  351 	ld	de, #_BackgroundTiles
-      000123 D5               [16]  352 	push	de
-      000124 21 00 12         [12]  353 	ld	hl, #0x1200
-      000127 E5               [16]  354 	push	hl
-      000128 CDr00r00         [24]  355 	call	_set_bkg_data
-      00012B E8 04            [16]  356 	add	sp, #4
-                                    357 ;main.c:44: set_bkg_tiles(0, 0, 20, 18, backgroundmap);
-      00012D 11r00r00         [12]  358 	ld	de, #_backgroundmap
-      000130 D5               [16]  359 	push	de
-      000131 21 14 12         [12]  360 	ld	hl, #0x1214
-      000134 E5               [16]  361 	push	hl
-      000135 AF               [ 4]  362 	xor	a, a
-      000136 0F               [ 4]  363 	rrca
-      000137 F5               [16]  364 	push	af
-      000138 CDr00r00         [24]  365 	call	_set_bkg_tiles
-      00013B E8 06            [16]  366 	add	sp, #6
-                                    367 ;main.c:47: }
-      00013D C9               [16]  368 	ret
-      00013E                        369 _BKGtile:
-      00013E FF                     370 	.db #0xff	; 255
-      00013F 00                     371 	.db #0x00	; 0
-      000140 81                     372 	.db #0x81	; 129
-      000141 7E                     373 	.db #0x7e	; 126
-      000142 BD                     374 	.db #0xbd	; 189
-      000143 42                     375 	.db #0x42	; 66	'B'
-      000144 A5                     376 	.db #0xa5	; 165
-      000145 5A                     377 	.db #0x5a	; 90	'Z'
-      000146 A5                     378 	.db #0xa5	; 165
-      000147 5A                     379 	.db #0x5a	; 90	'Z'
-      000148 BD                     380 	.db #0xbd	; 189
-      000149 42                     381 	.db #0x42	; 66	'B'
-      00014A 81                     382 	.db #0x81	; 129
-      00014B 7E                     383 	.db #0x7e	; 126
-      00014C FF                     384 	.db #0xff	; 255
-      00014D 00                     385 	.db #0x00	; 0
-      00014E                        386 _pint:
-      00014E 7E                     387 	.db #0x7e	; 126
-      00014F 42                     388 	.db #0x42	; 66	'B'
-      000150 42                     389 	.db #0x42	; 66	'B'
-      000151 7E                     390 	.db #0x7e	; 126
-      000152 42                     391 	.db #0x42	; 66	'B'
-      000153 7E                     392 	.db #0x7e	; 126
-      000154 42                     393 	.db #0x42	; 66	'B'
-      000155 7E                     394 	.db #0x7e	; 126
-      000156 42                     395 	.db #0x42	; 66	'B'
-      000157 7E                     396 	.db #0x7e	; 126
-      000158 42                     397 	.db #0x42	; 66	'B'
-      000159 7E                     398 	.db #0x7e	; 126
-      00015A 42                     399 	.db #0x42	; 66	'B'
-      00015B 7E                     400 	.db #0x7e	; 126
-      00015C 3C                     401 	.db #0x3c	; 60
-      00015D 3C                     402 	.db #0x3c	; 60
-      00015E                        403 _Wine:
-      00015E 42                     404 	.db #0x42	; 66	'B'
-      00015F 7E                     405 	.db #0x7e	; 126
-      000160 42                     406 	.db #0x42	; 66	'B'
-      000161 7E                     407 	.db #0x7e	; 126
-      000162 42                     408 	.db #0x42	; 66	'B'
-      000163 7E                     409 	.db #0x7e	; 126
-      000164 3C                     410 	.db #0x3c	; 60
-      000165 3C                     411 	.db #0x3c	; 60
-      000166 18                     412 	.db #0x18	; 24
-      000167 18                     413 	.db #0x18	; 24
-      000168 18                     414 	.db #0x18	; 24
-      000169 18                     415 	.db #0x18	; 24
-      00016A 18                     416 	.db #0x18	; 24
-      00016B 18                     417 	.db #0x18	; 24
-      00016C 3C                     418 	.db #0x3c	; 60
-      00016D 3C                     419 	.db #0x3c	; 60
-                                    420 ;main.c:49: void loadSprites(void)
-                                    421 ;	---------------------------------
-                                    422 ; Function loadSprites
-                                    423 ; ---------------------------------
-      00016E                        424 _loadSprites::
-                                    425 ;main.c:51: set_sprite_data(0, 1, Wine);
-      00016E 11r5Er01         [12]  426 	ld	de, #_Wine
-      000171 D5               [16]  427 	push	de
-      000172 AF               [ 4]  428 	xor	a, a
-      000173 3C               [ 4]  429 	inc	a
-      000174 F5               [16]  430 	push	af
-      000175 CDr00r00         [24]  431 	call	_set_sprite_data
-      000178 E8 04            [16]  432 	add	sp, #4
-                                    433 ;main.c:52: set_sprite_data(1, 1, character);
-      00017A 11r98r02         [12]  434 	ld	de, #_character
-      00017D D5               [16]  435 	push	de
-      00017E 21 01 01         [12]  436 	ld	hl, #0x101
-      000181 E5               [16]  437 	push	hl
-      000182 CDr00r00         [24]  438 	call	_set_sprite_data
-      000185 E8 04            [16]  439 	add	sp, #4
-                                    440 ;c:\gbdk\include\gb\gb.h:1804: shadow_OAM[nb].tile=tile;
-      000187 21r06r00         [12]  441 	ld	hl, #(_shadow_OAM + 6)
-      00018A 36 01            [12]  442 	ld	(hl), #0x01
-      00018C 21r0Ar00         [12]  443 	ld	hl, #(_shadow_OAM + 10)
-      00018F 36 01            [12]  444 	ld	(hl), #0x01
-                                    445 ;main.c:55: set_sprite_tile(2, 1);
-                                    446 ;main.c:57: }
-      000191 C9               [16]  447 	ret
-                                    448 ;main.c:60: void spriteFall(void)
-                                    449 ;	---------------------------------
-                                    450 ; Function spriteFall
-                                    451 ; ---------------------------------
-      000192                        452 _spriteFall::
-                                    453 ;c:\gbdk\include\gb\gb.h:1893: OAM_item_t * itm = &shadow_OAM[nb];
-      000192 01r00r00         [12]  454 	ld	bc, #_shadow_OAM+0
-                                    455 ;c:\gbdk\include\gb\gb.h:1894: itm->y+=y, itm->x+=x;
-      000195 0A               [ 8]  456 	ld	a, (bc)
-      000196 3C               [ 4]  457 	inc	a
-      000197 02               [ 8]  458 	ld	(bc), a
-      000198 03               [ 8]  459 	inc	bc
-      000199 0A               [ 8]  460 	ld	a, (bc)
-      00019A 02               [ 8]  461 	ld	(bc), a
-                                    462 ;main.c:63: wait_vbl_done();
-                                    463 ;main.c:65: }
-      00019B C3r00r00         [16]  464 	jp	_wait_vbl_done
-                                    465 ;main.c:67: void playerMovement(void)
-                                    466 ;	---------------------------------
-                                    467 ; Function playerMovement
-                                    468 ; ---------------------------------
-      00019E                        469 _playerMovement::
-                                    470 ;main.c:69: int8_t moveX = 0;
-      00019E 0E 00            [ 8]  471 	ld	c, #0x00
-                                    472 ;main.c:70: uint8_t buttons = joypad();
-      0001A0 CDr00r00         [24]  473 	call	_joypad
-                                    474 ;main.c:72: if (buttons & J_LEFT){
-      0001A3 CB 4F            [ 8]  475 	bit	1, a
-      0001A5 28 02            [12]  476 	jr	Z, 00102$
-                                    477 ;main.c:73: moveX = -1;
-      0001A7 0E FF            [ 8]  478 	ld	c, #0xff
-      0001A9                        479 00102$:
-                                    480 ;main.c:75: if (buttons & J_RIGHT){
-      0001A9 0F               [ 4]  481 	rrca
-      0001AA 30 02            [12]  482 	jr	NC, 00104$
-                                    483 ;main.c:76: moveX = 1;
-      0001AC 0E 01            [ 8]  484 	ld	c, #0x01
-      0001AE                        485 00104$:
-                                    486 ;c:\gbdk\include\gb\gb.h:1893: OAM_item_t * itm = &shadow_OAM[nb];
-      0001AE 11r04r00         [12]  487 	ld	de, #_shadow_OAM+4
-                                    488 ;c:\gbdk\include\gb\gb.h:1894: itm->y+=y, itm->x+=x;
-      0001B1 1A               [ 8]  489 	ld	a, (de)
-      0001B2 12               [ 8]  490 	ld	(de), a
-      0001B3 13               [ 8]  491 	inc	de
-      0001B4 1A               [ 8]  492 	ld	a, (de)
-      0001B5 81               [ 4]  493 	add	a, c
-      0001B6 12               [ 8]  494 	ld	(de), a
-                                    495 ;main.c:79: scroll_sprite(1, moveX, 0);
-                                    496 ;main.c:80: }
-      0001B7 C9               [16]  497 	ret
-                                    498 ;main.c:82: void main(void)
-                                    499 ;	---------------------------------
-                                    500 ; Function main
-                                    501 ; ---------------------------------
-      0001B8                        502 _main::
-                                    503 ;main.c:86: DISPLAY_ON;
-      0001B8 F0r00            [12]  504 	ldh	a, (_LCDC_REG + 0)
-      0001BA F6 80            [ 8]  505 	or	a, #0x80
-      0001BC E0r00            [12]  506 	ldh	(_LCDC_REG + 0), a
-                                    507 ;main.c:87: SHOW_BKG;
-      0001BE F0r00            [12]  508 	ldh	a, (_LCDC_REG + 0)
-      0001C0 F6 01            [ 8]  509 	or	a, #0x01
-      0001C2 E0r00            [12]  510 	ldh	(_LCDC_REG + 0), a
-                                    511 ;main.c:88: SHOW_SPRITES;
-      0001C4 F0r00            [12]  512 	ldh	a, (_LCDC_REG + 0)
-      0001C6 F6 02            [ 8]  513 	or	a, #0x02
-      0001C8 E0r00            [12]  514 	ldh	(_LCDC_REG + 0), a
-                                    515 ;main.c:90: setBackground();
-      0001CA CDr20r01         [24]  516 	call	_setBackground
-                                    517 ;main.c:91: loadSprites();
-      0001CD CDr6Er01         [24]  518 	call	_loadSprites
-                                    519 ;c:\gbdk\include\gb\gb.h:1877: OAM_item_t * itm = &shadow_OAM[nb];
-      0001D0 21r04r00         [12]  520 	ld	hl, #(_shadow_OAM + 4)
-                                    521 ;c:\gbdk\include\gb\gb.h:1878: itm->y=y, itm->x=x;
-      0001D3 3E 96            [ 8]  522 	ld	a, #0x96
-      0001D5 22               [ 8]  523 	ld	(hl+), a
-      0001D6 36 50            [12]  524 	ld	(hl), #0x50
-                                    525 ;main.c:94: setupSprites(&wineglass, 0, 1, 1, 1, 1, 0, 30, 30, 0, 0, Wine);
-      0001D8 11r5Er01         [12]  526 	ld	de, #_Wine
-      0001DB D5               [16]  527 	push	de
-      0001DC AF               [ 4]  528 	xor	a, a
-      0001DD 0F               [ 4]  529 	rrca
-      0001DE F5               [16]  530 	push	af
-      0001DF 21 1E 1E         [12]  531 	ld	hl, #0x1e1e
-      0001E2 E5               [16]  532 	push	hl
-      0001E3 AF               [ 4]  533 	xor	a, a
-      0001E4 67               [ 4]  534 	ld	h, a
-      0001E5 2E 01            [ 8]  535 	ld	l, #0x01
-      0001E7 E5               [16]  536 	push	hl
-      0001E8 21 01 01         [12]  537 	ld	hl, #0x101
-      0001EB E5               [16]  538 	push	hl
-      0001EC 3E 01            [ 8]  539 	ld	a, #0x01
-      0001EE F5               [16]  540 	push	af
-      0001EF 33               [ 8]  541 	inc	sp
-      0001F0 AF               [ 4]  542 	xor	a, a
-      0001F1 11r00r00         [12]  543 	ld	de, #_wineglass
-      0001F4 CDrB2r00         [24]  544 	call	_setupSprites
-                                    545 ;main.c:96: moveSprite(&wineglass, 30, 30);
-      0001F7 3E 1E            [ 8]  546 	ld	a, #0x1e
-      0001F9 F5               [16]  547 	push	af
-      0001FA 33               [ 8]  548 	inc	sp
-      0001FB 3E 1E            [ 8]  549 	ld	a, #0x1e
-      0001FD 11r00r00         [12]  550 	ld	de, #_wineglass
-      000200 CDr18r00         [24]  551 	call	_moveSprite
-                                    552 ;main.c:98: while (1) {
-      000203                        553 00102$:
-                                    554 ;main.c:100: spriteFall();
-      000203 CDr92r01         [24]  555 	call	_spriteFall
-                                    556 ;main.c:101: playerMovement();
-      000206 CDr9Er01         [24]  557 	call	_playerMovement
-                                    558 ;main.c:108: }
-      000209 18 F8            [12]  559 	jr	00102$
-                                    560 	.area _CODE
-                                    561 	.area _INITIALIZER
-      000000                        562 __xinit__backgroundmap:
-      000000 07                     563 	.db #0x07	; 7
-      000001 07                     564 	.db #0x07	; 7
-      000002 07                     565 	.db #0x07	; 7
-      000003 07                     566 	.db #0x07	; 7
-      000004 07                     567 	.db #0x07	; 7
-      000005 07                     568 	.db #0x07	; 7
-      000006 07                     569 	.db #0x07	; 7
-      000007 07                     570 	.db #0x07	; 7
-      000008 07                     571 	.db #0x07	; 7
-      000009 07                     572 	.db #0x07	; 7
-      00000A 07                     573 	.db #0x07	; 7
-      00000B 07                     574 	.db #0x07	; 7
-      00000C 07                     575 	.db #0x07	; 7
-      00000D 07                     576 	.db #0x07	; 7
-      00000E 07                     577 	.db #0x07	; 7
-      00000F 07                     578 	.db #0x07	; 7
-      000010 07                     579 	.db #0x07	; 7
-      000011 07                     580 	.db #0x07	; 7
-      000012 07                     581 	.db #0x07	; 7
-      000013 07                     582 	.db #0x07	; 7
-      000014 07                     583 	.db #0x07	; 7
-      000015 05                     584 	.db #0x05	; 5
-      000016 05                     585 	.db #0x05	; 5
-      000017 05                     586 	.db #0x05	; 5
-      000018 05                     587 	.db #0x05	; 5
-      000019 05                     588 	.db #0x05	; 5
-      00001A 05                     589 	.db #0x05	; 5
-      00001B 05                     590 	.db #0x05	; 5
-      00001C 05                     591 	.db #0x05	; 5
-      00001D 05                     592 	.db #0x05	; 5
-      00001E 05                     593 	.db #0x05	; 5
-      00001F 05                     594 	.db #0x05	; 5
-      000020 05                     595 	.db #0x05	; 5
-      000021 05                     596 	.db #0x05	; 5
-      000022 05                     597 	.db #0x05	; 5
-      000023 05                     598 	.db #0x05	; 5
-      000024 05                     599 	.db #0x05	; 5
-      000025 05                     600 	.db #0x05	; 5
-      000026 05                     601 	.db #0x05	; 5
-      000027 07                     602 	.db #0x07	; 7
-      000028 07                     603 	.db #0x07	; 7
-      000029 05                     604 	.db #0x05	; 5
-      00002A 05                     605 	.db #0x05	; 5
-      00002B 05                     606 	.db #0x05	; 5
-      00002C 05                     607 	.db #0x05	; 5
-      00002D 05                     608 	.db #0x05	; 5
-      00002E 05                     609 	.db #0x05	; 5
-      00002F 05                     610 	.db #0x05	; 5
-      000030 05                     611 	.db #0x05	; 5
-      000031 05                     612 	.db #0x05	; 5
-      000032 05                     613 	.db #0x05	; 5
-      000033 05                     614 	.db #0x05	; 5
-      000034 05                     615 	.db #0x05	; 5
-      000035 05                     616 	.db #0x05	; 5
-      000036 05                     617 	.db #0x05	; 5
-      000037 05                     618 	.db #0x05	; 5
-      000038 05                     619 	.db #0x05	; 5
-      000039 05                     620 	.db #0x05	; 5
-      00003A 05                     621 	.db #0x05	; 5
-      00003B 07                     622 	.db #0x07	; 7
-      00003C 07                     623 	.db #0x07	; 7
-      00003D 05                     624 	.db #0x05	; 5
-      00003E 05                     625 	.db #0x05	; 5
-      00003F 05                     626 	.db #0x05	; 5
-      000040 05                     627 	.db #0x05	; 5
-      000041 05                     628 	.db #0x05	; 5
-      000042 05                     629 	.db #0x05	; 5
-      000043 05                     630 	.db #0x05	; 5
-      000044 05                     631 	.db #0x05	; 5
-      000045 05                     632 	.db #0x05	; 5
-      000046 05                     633 	.db #0x05	; 5
-      000047 05                     634 	.db #0x05	; 5
-      000048 05                     635 	.db #0x05	; 5
-      000049 05                     636 	.db #0x05	; 5
-      00004A 05                     637 	.db #0x05	; 5
-      00004B 05                     638 	.db #0x05	; 5
-      00004C 05                     639 	.db #0x05	; 5
-      00004D 05                     640 	.db #0x05	; 5
-      00004E 05                     641 	.db #0x05	; 5
-      00004F 07                     642 	.db #0x07	; 7
-      000050 07                     643 	.db #0x07	; 7
-      000051 05                     644 	.db #0x05	; 5
-      000052 00                     645 	.db #0x00	; 0
-      000053 00                     646 	.db #0x00	; 0
-      000054 0E                     647 	.db #0x0e	; 14
-      000055 0E                     648 	.db #0x0e	; 14
-      000056 0E                     649 	.db #0x0e	; 14
-      000057 0E                     650 	.db #0x0e	; 14
-      000058 00                     651 	.db #0x00	; 0
-      000059 00                     652 	.db #0x00	; 0
-      00005A 00                     653 	.db #0x00	; 0
-      00005B 00                     654 	.db #0x00	; 0
-      00005C 0E                     655 	.db #0x0e	; 14
-      00005D 0E                     656 	.db #0x0e	; 14
-      00005E 0E                     657 	.db #0x0e	; 14
-      00005F 0E                     658 	.db #0x0e	; 14
-      000060 00                     659 	.db #0x00	; 0
-      000061 00                     660 	.db #0x00	; 0
-      000062 05                     661 	.db #0x05	; 5
-      000063 07                     662 	.db #0x07	; 7
-      000064 07                     663 	.db #0x07	; 7
-      000065 05                     664 	.db #0x05	; 5
-      000066 00                     665 	.db #0x00	; 0
-      000067 00                     666 	.db #0x00	; 0
-      000068 0D                     667 	.db #0x0d	; 13
-      000069 0D                     668 	.db #0x0d	; 13
-      00006A 0D                     669 	.db #0x0d	; 13
-      00006B 0D                     670 	.db #0x0d	; 13
-      00006C 00                     671 	.db #0x00	; 0
-      00006D 00                     672 	.db #0x00	; 0
-      00006E 00                     673 	.db #0x00	; 0
-      00006F 00                     674 	.db #0x00	; 0
-      000070 0D                     675 	.db #0x0d	; 13
-      000071 0D                     676 	.db #0x0d	; 13
-      000072 0D                     677 	.db #0x0d	; 13
-      000073 0D                     678 	.db #0x0d	; 13
-      000074 00                     679 	.db #0x00	; 0
-      000075 00                     680 	.db #0x00	; 0
-      000076 05                     681 	.db #0x05	; 5
-      000077 07                     682 	.db #0x07	; 7
-      000078 07                     683 	.db #0x07	; 7
-      000079 05                     684 	.db #0x05	; 5
-      00007A 00                     685 	.db #0x00	; 0
-      00007B 00                     686 	.db #0x00	; 0
-      00007C 00                     687 	.db #0x00	; 0
-      00007D 00                     688 	.db #0x00	; 0
-      00007E 00                     689 	.db #0x00	; 0
-      00007F 00                     690 	.db #0x00	; 0
-      000080 00                     691 	.db #0x00	; 0
-      000081 00                     692 	.db #0x00	; 0
-      000082 00                     693 	.db #0x00	; 0
-      000083 00                     694 	.db #0x00	; 0
-      000084 00                     695 	.db #0x00	; 0
-      000085 00                     696 	.db #0x00	; 0
-      000086 00                     697 	.db #0x00	; 0
-      000087 00                     698 	.db #0x00	; 0
-      000088 00                     699 	.db #0x00	; 0
-      000089 00                     700 	.db #0x00	; 0
-      00008A 05                     701 	.db #0x05	; 5
-      00008B 07                     702 	.db #0x07	; 7
-      00008C 07                     703 	.db #0x07	; 7
-      00008D 05                     704 	.db #0x05	; 5
-      00008E 0C                     705 	.db #0x0c	; 12
-      00008F 0C                     706 	.db #0x0c	; 12
-      000090 0C                     707 	.db #0x0c	; 12
-      000091 0C                     708 	.db #0x0c	; 12
-      000092 0C                     709 	.db #0x0c	; 12
-      000093 00                     710 	.db #0x00	; 0
-      000094 00                     711 	.db #0x00	; 0
-      000095 00                     712 	.db #0x00	; 0
-      000096 00                     713 	.db #0x00	; 0
-      000097 00                     714 	.db #0x00	; 0
-      000098 00                     715 	.db #0x00	; 0
-      000099 00                     716 	.db #0x00	; 0
-      00009A 00                     717 	.db #0x00	; 0
-      00009B 00                     718 	.db #0x00	; 0
-      00009C 00                     719 	.db #0x00	; 0
-      00009D 00                     720 	.db #0x00	; 0
-      00009E 05                     721 	.db #0x05	; 5
-      00009F 07                     722 	.db #0x07	; 7
-      0000A0 07                     723 	.db #0x07	; 7
-      0000A1 05                     724 	.db #0x05	; 5
-      0000A2 09                     725 	.db #0x09	; 9
-      0000A3 09                     726 	.db #0x09	; 9
-      0000A4 09                     727 	.db #0x09	; 9
-      0000A5 09                     728 	.db #0x09	; 9
-      0000A6 09                     729 	.db #0x09	; 9
-      0000A7 00                     730 	.db #0x00	; 0
-      0000A8 00                     731 	.db #0x00	; 0
-      0000A9 00                     732 	.db #0x00	; 0
-      0000AA 00                     733 	.db #0x00	; 0
-      0000AB 00                     734 	.db #0x00	; 0
-      0000AC 00                     735 	.db #0x00	; 0
-      0000AD 08                     736 	.db #0x08	; 8
-      0000AE 08                     737 	.db #0x08	; 8
-      0000AF 08                     738 	.db #0x08	; 8
-      0000B0 08                     739 	.db #0x08	; 8
-      0000B1 08                     740 	.db #0x08	; 8
-      0000B2 05                     741 	.db #0x05	; 5
-      0000B3 07                     742 	.db #0x07	; 7
-      0000B4 07                     743 	.db #0x07	; 7
-      0000B5 05                     744 	.db #0x05	; 5
-      0000B6 00                     745 	.db #0x00	; 0
-      0000B7 00                     746 	.db #0x00	; 0
-      0000B8 00                     747 	.db #0x00	; 0
-      0000B9 00                     748 	.db #0x00	; 0
-      0000BA 00                     749 	.db #0x00	; 0
-      0000BB 00                     750 	.db #0x00	; 0
-      0000BC 00                     751 	.db #0x00	; 0
-      0000BD 00                     752 	.db #0x00	; 0
-      0000BE 00                     753 	.db #0x00	; 0
-      0000BF 00                     754 	.db #0x00	; 0
-      0000C0 00                     755 	.db #0x00	; 0
-      0000C1 00                     756 	.db #0x00	; 0
-      0000C2 00                     757 	.db #0x00	; 0
-      0000C3 00                     758 	.db #0x00	; 0
-      0000C4 00                     759 	.db #0x00	; 0
-      0000C5 00                     760 	.db #0x00	; 0
-      0000C6 05                     761 	.db #0x05	; 5
-      0000C7 07                     762 	.db #0x07	; 7
-      0000C8 07                     763 	.db #0x07	; 7
-      0000C9 05                     764 	.db #0x05	; 5
-      0000CA 00                     765 	.db #0x00	; 0
-      0000CB 00                     766 	.db #0x00	; 0
-      0000CC 00                     767 	.db #0x00	; 0
-      0000CD 00                     768 	.db #0x00	; 0
-      0000CE 00                     769 	.db #0x00	; 0
-      0000CF 00                     770 	.db #0x00	; 0
-      0000D0 00                     771 	.db #0x00	; 0
-      0000D1 00                     772 	.db #0x00	; 0
-      0000D2 00                     773 	.db #0x00	; 0
-      0000D3 00                     774 	.db #0x00	; 0
-      0000D4 00                     775 	.db #0x00	; 0
-      0000D5 00                     776 	.db #0x00	; 0
-      0000D6 00                     777 	.db #0x00	; 0
-      0000D7 00                     778 	.db #0x00	; 0
-      0000D8 00                     779 	.db #0x00	; 0
-      0000D9 00                     780 	.db #0x00	; 0
-      0000DA 05                     781 	.db #0x05	; 5
-      0000DB 07                     782 	.db #0x07	; 7
-      0000DC 07                     783 	.db #0x07	; 7
-      0000DD 05                     784 	.db #0x05	; 5
-      0000DE 00                     785 	.db #0x00	; 0
-      0000DF 00                     786 	.db #0x00	; 0
-      0000E0 10                     787 	.db #0x10	; 16
-      0000E1 00                     788 	.db #0x00	; 0
-      0000E2 00                     789 	.db #0x00	; 0
-      0000E3 10                     790 	.db #0x10	; 16
-      0000E4 00                     791 	.db #0x00	; 0
-      0000E5 00                     792 	.db #0x00	; 0
-      0000E6 00                     793 	.db #0x00	; 0
-      0000E7 00                     794 	.db #0x00	; 0
-      0000E8 10                     795 	.db #0x10	; 16
-      0000E9 00                     796 	.db #0x00	; 0
-      0000EA 00                     797 	.db #0x00	; 0
-      0000EB 10                     798 	.db #0x10	; 16
-      0000EC 00                     799 	.db #0x00	; 0
-      0000ED 00                     800 	.db #0x00	; 0
-      0000EE 05                     801 	.db #0x05	; 5
-      0000EF 07                     802 	.db #0x07	; 7
-      0000F0 07                     803 	.db #0x07	; 7
-      0000F1 05                     804 	.db #0x05	; 5
-      0000F2 00                     805 	.db #0x00	; 0
-      0000F3 00                     806 	.db #0x00	; 0
-      0000F4 0F                     807 	.db #0x0f	; 15
-      0000F5 00                     808 	.db #0x00	; 0
-      0000F6 00                     809 	.db #0x00	; 0
-      0000F7 11                     810 	.db #0x11	; 17
-      0000F8 00                     811 	.db #0x00	; 0
-      0000F9 00                     812 	.db #0x00	; 0
-      0000FA 00                     813 	.db #0x00	; 0
-      0000FB 00                     814 	.db #0x00	; 0
-      0000FC 11                     815 	.db #0x11	; 17
-      0000FD 00                     816 	.db #0x00	; 0
-      0000FE 00                     817 	.db #0x00	; 0
-      0000FF 0F                     818 	.db #0x0f	; 15
-      000100 00                     819 	.db #0x00	; 0
-      000101 00                     820 	.db #0x00	; 0
-      000102 05                     821 	.db #0x05	; 5
-      000103 07                     822 	.db #0x07	; 7
-      000104 07                     823 	.db #0x07	; 7
-      000105 00                     824 	.db #0x00	; 0
-      000106 02                     825 	.db #0x02	; 2
-      000107 03                     826 	.db #0x03	; 3
-      000108 03                     827 	.db #0x03	; 3
-      000109 03                     828 	.db #0x03	; 3
-      00010A 03                     829 	.db #0x03	; 3
-      00010B 03                     830 	.db #0x03	; 3
-      00010C 03                     831 	.db #0x03	; 3
-      00010D 03                     832 	.db #0x03	; 3
-      00010E 03                     833 	.db #0x03	; 3
-      00010F 03                     834 	.db #0x03	; 3
-      000110 03                     835 	.db #0x03	; 3
-      000111 03                     836 	.db #0x03	; 3
-      000112 03                     837 	.db #0x03	; 3
-      000113 03                     838 	.db #0x03	; 3
-      000114 03                     839 	.db #0x03	; 3
-      000115 04                     840 	.db #0x04	; 4
-      000116 00                     841 	.db #0x00	; 0
-      000117 07                     842 	.db #0x07	; 7
-      000118 07                     843 	.db #0x07	; 7
-      000119 00                     844 	.db #0x00	; 0
-      00011A 06                     845 	.db #0x06	; 6
-      00011B 06                     846 	.db #0x06	; 6
-      00011C 06                     847 	.db #0x06	; 6
-      00011D 06                     848 	.db #0x06	; 6
-      00011E 06                     849 	.db #0x06	; 6
-      00011F 06                     850 	.db #0x06	; 6
-      000120 06                     851 	.db #0x06	; 6
-      000121 06                     852 	.db #0x06	; 6
-      000122 06                     853 	.db #0x06	; 6
-      000123 06                     854 	.db #0x06	; 6
-      000124 06                     855 	.db #0x06	; 6
-      000125 06                     856 	.db #0x06	; 6
-      000126 06                     857 	.db #0x06	; 6
-      000127 06                     858 	.db #0x06	; 6
-      000128 06                     859 	.db #0x06	; 6
-      000129 06                     860 	.db #0x06	; 6
-      00012A 00                     861 	.db #0x00	; 0
-      00012B 07                     862 	.db #0x07	; 7
-      00012C 07                     863 	.db #0x07	; 7
-      00012D 00                     864 	.db #0x00	; 0
-      00012E 06                     865 	.db #0x06	; 6
-      00012F 06                     866 	.db #0x06	; 6
-      000130 06                     867 	.db #0x06	; 6
-      000131 06                     868 	.db #0x06	; 6
-      000132 06                     869 	.db #0x06	; 6
-      000133 06                     870 	.db #0x06	; 6
-      000134 06                     871 	.db #0x06	; 6
-      000135 06                     872 	.db #0x06	; 6
-      000136 06                     873 	.db #0x06	; 6
-      000137 06                     874 	.db #0x06	; 6
-      000138 06                     875 	.db #0x06	; 6
-      000139 06                     876 	.db #0x06	; 6
-      00013A 06                     877 	.db #0x06	; 6
-      00013B 06                     878 	.db #0x06	; 6
-      00013C 06                     879 	.db #0x06	; 6
-      00013D 06                     880 	.db #0x06	; 6
-      00013E 00                     881 	.db #0x00	; 0
-      00013F 07                     882 	.db #0x07	; 7
-      000140 07                     883 	.db #0x07	; 7
-      000141 01                     884 	.db #0x01	; 1
-      000142 06                     885 	.db #0x06	; 6
-      000143 06                     886 	.db #0x06	; 6
-      000144 06                     887 	.db #0x06	; 6
-      000145 06                     888 	.db #0x06	; 6
-      000146 06                     889 	.db #0x06	; 6
-      000147 06                     890 	.db #0x06	; 6
-      000148 06                     891 	.db #0x06	; 6
-      000149 06                     892 	.db #0x06	; 6
-      00014A 06                     893 	.db #0x06	; 6
-      00014B 06                     894 	.db #0x06	; 6
-      00014C 06                     895 	.db #0x06	; 6
-      00014D 06                     896 	.db #0x06	; 6
-      00014E 06                     897 	.db #0x06	; 6
-      00014F 06                     898 	.db #0x06	; 6
-      000150 06                     899 	.db #0x06	; 6
-      000151 06                     900 	.db #0x06	; 6
-      000152 01                     901 	.db #0x01	; 1
-      000153 07                     902 	.db #0x07	; 7
-      000154 05                     903 	.db #0x05	; 5
-      000155 05                     904 	.db #0x05	; 5
-      000156 05                     905 	.db #0x05	; 5
-      000157 05                     906 	.db #0x05	; 5
-      000158 05                     907 	.db #0x05	; 5
-      000159 05                     908 	.db #0x05	; 5
-      00015A 05                     909 	.db #0x05	; 5
-      00015B 05                     910 	.db #0x05	; 5
-      00015C 05                     911 	.db #0x05	; 5
-      00015D 05                     912 	.db #0x05	; 5
-      00015E 05                     913 	.db #0x05	; 5
-      00015F 05                     914 	.db #0x05	; 5
-      000160 05                     915 	.db #0x05	; 5
-      000161 05                     916 	.db #0x05	; 5
-      000162 05                     917 	.db #0x05	; 5
-      000163 05                     918 	.db #0x05	; 5
-      000164 05                     919 	.db #0x05	; 5
-      000165 05                     920 	.db #0x05	; 5
-      000166 05                     921 	.db #0x05	; 5
-      000167 05                     922 	.db #0x05	; 5
-      000168                        923 __xinit__BackgroundTiles:
-      000168 00                     924 	.db #0x00	; 0
-      000169 00                     925 	.db #0x00	; 0
-      00016A 00                     926 	.db #0x00	; 0
-      00016B 00                     927 	.db #0x00	; 0
-      00016C 00                     928 	.db #0x00	; 0
-      00016D 00                     929 	.db #0x00	; 0
-      00016E 00                     930 	.db #0x00	; 0
-      00016F 00                     931 	.db #0x00	; 0
-      000170 00                     932 	.db #0x00	; 0
-      000171 00                     933 	.db #0x00	; 0
-      000172 00                     934 	.db #0x00	; 0
-      000173 00                     935 	.db #0x00	; 0
-      000174 00                     936 	.db #0x00	; 0
-      000175 00                     937 	.db #0x00	; 0
-      000176 00                     938 	.db #0x00	; 0
-      000177 00                     939 	.db #0x00	; 0
-      000178 00                     940 	.db #0x00	; 0
-      000179 00                     941 	.db #0x00	; 0
-      00017A 00                     942 	.db #0x00	; 0
-      00017B 00                     943 	.db #0x00	; 0
-      00017C 00                     944 	.db #0x00	; 0
-      00017D 00                     945 	.db #0x00	; 0
-      00017E 00                     946 	.db #0x00	; 0
-      00017F 00                     947 	.db #0x00	; 0
-      000180 00                     948 	.db #0x00	; 0
-      000181 00                     949 	.db #0x00	; 0
-      000182 FF                     950 	.db #0xff	; 255
-      000183 FF                     951 	.db #0xff	; 255
-      000184 00                     952 	.db #0x00	; 0
-      000185 FF                     953 	.db #0xff	; 255
-      000186 FF                     954 	.db #0xff	; 255
-      000187 00                     955 	.db #0x00	; 0
-      000188 7F                     956 	.db #0x7f	; 127
-      000189 7F                     957 	.db #0x7f	; 127
-      00018A AA                     958 	.db #0xaa	; 170
-      00018B D5                     959 	.db #0xd5	; 213
-      00018C AA                     960 	.db #0xaa	; 170
-      00018D D5                     961 	.db #0xd5	; 213
-      00018E AA                     962 	.db #0xaa	; 170
-      00018F D5                     963 	.db #0xd5	; 213
-      000190 AA                     964 	.db #0xaa	; 170
-      000191 D5                     965 	.db #0xd5	; 213
-      000192 AA                     966 	.db #0xaa	; 170
-      000193 D5                     967 	.db #0xd5	; 213
-      000194 AA                     968 	.db #0xaa	; 170
-      000195 D5                     969 	.db #0xd5	; 213
-      000196 AA                     970 	.db #0xaa	; 170
-      000197 D5                     971 	.db #0xd5	; 213
-      000198 FF                     972 	.db #0xff	; 255
-      000199 FF                     973 	.db #0xff	; 255
-      00019A AA                     974 	.db #0xaa	; 170
-      00019B 55                     975 	.db #0x55	; 85	'U'
-      00019C AA                     976 	.db #0xaa	; 170
-      00019D 55                     977 	.db #0x55	; 85	'U'
-      00019E AA                     978 	.db #0xaa	; 170
-      00019F 55                     979 	.db #0x55	; 85	'U'
-      0001A0 AA                     980 	.db #0xaa	; 170
-      0001A1 55                     981 	.db #0x55	; 85	'U'
-      0001A2 AA                     982 	.db #0xaa	; 170
-      0001A3 55                     983 	.db #0x55	; 85	'U'
-      0001A4 AA                     984 	.db #0xaa	; 170
-      0001A5 55                     985 	.db #0x55	; 85	'U'
-      0001A6 AA                     986 	.db #0xaa	; 170
-      0001A7 55                     987 	.db #0x55	; 85	'U'
-      0001A8 FE                     988 	.db #0xfe	; 254
-      0001A9 FE                     989 	.db #0xfe	; 254
-      0001AA AB                     990 	.db #0xab	; 171
-      0001AB 55                     991 	.db #0x55	; 85	'U'
-      0001AC AB                     992 	.db #0xab	; 171
-      0001AD 55                     993 	.db #0x55	; 85	'U'
-      0001AE AB                     994 	.db #0xab	; 171
-      0001AF 55                     995 	.db #0x55	; 85	'U'
-      0001B0 AB                     996 	.db #0xab	; 171
-      0001B1 55                     997 	.db #0x55	; 85	'U'
-      0001B2 AB                     998 	.db #0xab	; 171
-      0001B3 55                     999 	.db #0x55	; 85	'U'
-      0001B4 AB                    1000 	.db #0xab	; 171
-      0001B5 55                    1001 	.db #0x55	; 85	'U'
-      0001B6 AB                    1002 	.db #0xab	; 171
-      0001B7 55                    1003 	.db #0x55	; 85	'U'
-      0001B8 00                    1004 	.db #0x00	; 0
-      0001B9 FF                    1005 	.db #0xff	; 255
-      0001BA 00                    1006 	.db #0x00	; 0
-      0001BB FF                    1007 	.db #0xff	; 255
-      0001BC 00                    1008 	.db #0x00	; 0
-      0001BD FF                    1009 	.db #0xff	; 255
-      0001BE 00                    1010 	.db #0x00	; 0
-      0001BF FF                    1011 	.db #0xff	; 255
-      0001C0 00                    1012 	.db #0x00	; 0
-      0001C1 FF                    1013 	.db #0xff	; 255
-      0001C2 00                    1014 	.db #0x00	; 0
-      0001C3 FF                    1015 	.db #0xff	; 255
-      0001C4 00                    1016 	.db #0x00	; 0
-      0001C5 FF                    1017 	.db #0xff	; 255
-      0001C6 00                    1018 	.db #0x00	; 0
-      0001C7 FF                    1019 	.db #0xff	; 255
-      0001C8 FF                    1020 	.db #0xff	; 255
-      0001C9 00                    1021 	.db #0x00	; 0
-      0001CA FF                    1022 	.db #0xff	; 255
-      0001CB 00                    1023 	.db #0x00	; 0
-      0001CC FF                    1024 	.db #0xff	; 255
-      0001CD 00                    1025 	.db #0x00	; 0
-      0001CE FF                    1026 	.db #0xff	; 255
-      0001CF 00                    1027 	.db #0x00	; 0
-      0001D0 FF                    1028 	.db #0xff	; 255
-      0001D1 00                    1029 	.db #0x00	; 0
-      0001D2 FF                    1030 	.db #0xff	; 255
-      0001D3 00                    1031 	.db #0x00	; 0
-      0001D4 FF                    1032 	.db #0xff	; 255
-      0001D5 00                    1033 	.db #0x00	; 0
-      0001D6 FF                    1034 	.db #0xff	; 255
-      0001D7 00                    1035 	.db #0x00	; 0
-      0001D8 FF                    1036 	.db #0xff	; 255
-      0001D9 FF                    1037 	.db #0xff	; 255
-      0001DA FF                    1038 	.db #0xff	; 255
-      0001DB FF                    1039 	.db #0xff	; 255
-      0001DC FF                    1040 	.db #0xff	; 255
-      0001DD FF                    1041 	.db #0xff	; 255
-      0001DE FF                    1042 	.db #0xff	; 255
-      0001DF FF                    1043 	.db #0xff	; 255
-      0001E0 FF                    1044 	.db #0xff	; 255
-      0001E1 FF                    1045 	.db #0xff	; 255
-      0001E2 FF                    1046 	.db #0xff	; 255
-      0001E3 FF                    1047 	.db #0xff	; 255
-      0001E4 FF                    1048 	.db #0xff	; 255
-      0001E5 FF                    1049 	.db #0xff	; 255
-      0001E6 FF                    1050 	.db #0xff	; 255
-      0001E7 FF                    1051 	.db #0xff	; 255
-      0001E8 7E                    1052 	.db #0x7e	; 126
-      0001E9 42                    1053 	.db #0x42	; 66	'B'
-      0001EA 3C                    1054 	.db #0x3c	; 60
-      0001EB 24                    1055 	.db #0x24	; 36
-      0001EC 18                    1056 	.db #0x18	; 24
-      0001ED 18                    1057 	.db #0x18	; 24
-      0001EE 18                    1058 	.db #0x18	; 24
-      0001EF 18                    1059 	.db #0x18	; 24
-      0001F0 3C                    1060 	.db #0x3c	; 60
-      0001F1 3C                    1061 	.db #0x3c	; 60
-      0001F2 00                    1062 	.db #0x00	; 0
-      0001F3 FF                    1063 	.db #0xff	; 255
-      0001F4 FF                    1064 	.db #0xff	; 255
-      0001F5 00                    1065 	.db #0x00	; 0
-      0001F6 FF                    1066 	.db #0xff	; 255
-      0001F7 00                    1067 	.db #0x00	; 0
-      0001F8 42                    1068 	.db #0x42	; 66	'B'
-      0001F9 42                    1069 	.db #0x42	; 66	'B'
-      0001FA 42                    1070 	.db #0x42	; 66	'B'
-      0001FB 42                    1071 	.db #0x42	; 66	'B'
-      0001FC 42                    1072 	.db #0x42	; 66	'B'
-      0001FD 42                    1073 	.db #0x42	; 66	'B'
-      0001FE 42                    1074 	.db #0x42	; 66	'B'
-      0001FF 42                    1075 	.db #0x42	; 66	'B'
-      000200 3C                    1076 	.db #0x3c	; 60
-      000201 3C                    1077 	.db #0x3c	; 60
-      000202 00                    1078 	.db #0x00	; 0
-      000203 FF                    1079 	.db #0xff	; 255
-      000204 FF                    1080 	.db #0xff	; 255
-      000205 00                    1081 	.db #0x00	; 0
-      000206 FF                    1082 	.db #0xff	; 255
-      000207 00                    1083 	.db #0x00	; 0
-      000208 7E                    1084 	.db #0x7e	; 126
-      000209 42                    1085 	.db #0x42	; 66	'B'
-      00020A 7E                    1086 	.db #0x7e	; 126
-      00020B 42                    1087 	.db #0x42	; 66	'B'
-      00020C 7E                    1088 	.db #0x7e	; 126
-      00020D 42                    1089 	.db #0x42	; 66	'B'
-      00020E 7E                    1090 	.db #0x7e	; 126
-      00020F 42                    1091 	.db #0x42	; 66	'B'
-      000210 3C                    1092 	.db #0x3c	; 60
-      000211 3C                    1093 	.db #0x3c	; 60
-      000212 00                    1094 	.db #0x00	; 0
-      000213 FF                    1095 	.db #0xff	; 255
-      000214 FF                    1096 	.db #0xff	; 255
-      000215 00                    1097 	.db #0x00	; 0
-      000216 FF                    1098 	.db #0xff	; 255
-      000217 00                    1099 	.db #0x00	; 0
-      000218 00                    1100 	.db #0x00	; 0
-      000219 00                    1101 	.db #0x00	; 0
-      00021A 00                    1102 	.db #0x00	; 0
-      00021B 00                    1103 	.db #0x00	; 0
-      00021C 00                    1104 	.db #0x00	; 0
-      00021D 00                    1105 	.db #0x00	; 0
-      00021E 00                    1106 	.db #0x00	; 0
-      00021F 00                    1107 	.db #0x00	; 0
-      000220 00                    1108 	.db #0x00	; 0
-      000221 00                    1109 	.db #0x00	; 0
-      000222 00                    1110 	.db #0x00	; 0
-      000223 00                    1111 	.db #0x00	; 0
-      000224 00                    1112 	.db #0x00	; 0
-      000225 00                    1113 	.db #0x00	; 0
-      000226 42                    1114 	.db #0x42	; 66	'B'
-      000227 7E                    1115 	.db #0x7e	; 126
-      000228 00                    1116 	.db #0x00	; 0
-      000229 00                    1117 	.db #0x00	; 0
-      00022A 00                    1118 	.db #0x00	; 0
-      00022B 00                    1119 	.db #0x00	; 0
-      00022C 00                    1120 	.db #0x00	; 0
-      00022D 00                    1121 	.db #0x00	; 0
-      00022E 00                    1122 	.db #0x00	; 0
-      00022F 00                    1123 	.db #0x00	; 0
-      000230 00                    1124 	.db #0x00	; 0
-      000231 00                    1125 	.db #0x00	; 0
-      000232 00                    1126 	.db #0x00	; 0
-      000233 00                    1127 	.db #0x00	; 0
-      000234 00                    1128 	.db #0x00	; 0
-      000235 00                    1129 	.db #0x00	; 0
-      000236 42                    1130 	.db #0x42	; 66	'B'
-      000237 42                    1131 	.db #0x42	; 66	'B'
-      000238 7E                    1132 	.db #0x7e	; 126
-      000239 4A                    1133 	.db #0x4a	; 74	'J'
-      00023A 7E                    1134 	.db #0x7e	; 126
-      00023B 52                    1135 	.db #0x52	; 82	'R'
-      00023C 42                    1136 	.db #0x42	; 66	'B'
-      00023D 7E                    1137 	.db #0x7e	; 126
-      00023E 42                    1138 	.db #0x42	; 66	'B'
-      00023F 7E                    1139 	.db #0x7e	; 126
-      000240 7E                    1140 	.db #0x7e	; 126
-      000241 7E                    1141 	.db #0x7e	; 126
-      000242 00                    1142 	.db #0x00	; 0
-      000243 FF                    1143 	.db #0xff	; 255
-      000244 FF                    1144 	.db #0xff	; 255
-      000245 00                    1145 	.db #0x00	; 0
-      000246 FF                    1146 	.db #0xff	; 255
-      000247 00                    1147 	.db #0x00	; 0
-      000248 00                    1148 	.db #0x00	; 0
-      000249 00                    1149 	.db #0x00	; 0
-      00024A 00                    1150 	.db #0x00	; 0
-      00024B 00                    1151 	.db #0x00	; 0
-      00024C 00                    1152 	.db #0x00	; 0
-      00024D 00                    1153 	.db #0x00	; 0
-      00024E 18                    1154 	.db #0x18	; 24
-      00024F 00                    1155 	.db #0x00	; 0
-      000250 18                    1156 	.db #0x18	; 24
-      000251 18                    1157 	.db #0x18	; 24
-      000252 18                    1158 	.db #0x18	; 24
-      000253 18                    1159 	.db #0x18	; 24
-      000254 24                    1160 	.db #0x24	; 36
-      000255 3C                    1161 	.db #0x3c	; 60
-      000256 42                    1162 	.db #0x42	; 66	'B'
-      000257 7E                    1163 	.db #0x7e	; 126
-      000258 3C                    1164 	.db #0x3c	; 60
-      000259 3C                    1165 	.db #0x3c	; 60
-      00025A 3C                    1166 	.db #0x3c	; 60
-      00025B 3C                    1167 	.db #0x3c	; 60
-      00025C 3C                    1168 	.db #0x3c	; 60
-      00025D 00                    1169 	.db #0x00	; 0
-      00025E 42                    1170 	.db #0x42	; 66	'B'
-      00025F 3C                    1171 	.db #0x3c	; 60
-      000260 42                    1172 	.db #0x42	; 66	'B'
-      000261 3C                    1173 	.db #0x3c	; 60
-      000262 42                    1174 	.db #0x42	; 66	'B'
-      000263 3C                    1175 	.db #0x3c	; 60
-      000264 3C                    1176 	.db #0x3c	; 60
-      000265 00                    1177 	.db #0x00	; 0
-      000266 3C                    1178 	.db #0x3c	; 60
-      000267 3C                    1179 	.db #0x3c	; 60
-      000268 00                    1180 	.db #0x00	; 0
-      000269 00                    1181 	.db #0x00	; 0
-      00026A 00                    1182 	.db #0x00	; 0
-      00026B 00                    1183 	.db #0x00	; 0
-      00026C 00                    1184 	.db #0x00	; 0
-      00026D 00                    1185 	.db #0x00	; 0
-      00026E 00                    1186 	.db #0x00	; 0
-      00026F 00                    1187 	.db #0x00	; 0
-      000270 00                    1188 	.db #0x00	; 0
-      000271 00                    1189 	.db #0x00	; 0
-      000272 00                    1190 	.db #0x00	; 0
-      000273 00                    1191 	.db #0x00	; 0
-      000274 00                    1192 	.db #0x00	; 0
-      000275 00                    1193 	.db #0x00	; 0
-      000276 18                    1194 	.db #0x18	; 24
-      000277 18                    1195 	.db #0x18	; 24
-      000278 3C                    1196 	.db #0x3c	; 60
-      000279 3C                    1197 	.db #0x3c	; 60
-      00027A 3C                    1198 	.db #0x3c	; 60
-      00027B 00                    1199 	.db #0x00	; 0
-      00027C 66                    1200 	.db #0x66	; 102	'f'
-      00027D 18                    1201 	.db #0x18	; 24
-      00027E A5                    1202 	.db #0xa5	; 165
-      00027F 5A                    1203 	.db #0x5a	; 90	'Z'
-      000280 A5                    1204 	.db #0xa5	; 165
-      000281 5A                    1205 	.db #0x5a	; 90	'Z'
-      000282 66                    1206 	.db #0x66	; 102	'f'
-      000283 18                    1207 	.db #0x18	; 24
-      000284 3C                    1208 	.db #0x3c	; 60
-      000285 00                    1209 	.db #0x00	; 0
-      000286 3C                    1210 	.db #0x3c	; 60
-      000287 3C                    1211 	.db #0x3c	; 60
-      000288 00                    1212 	.db #0x00	; 0
-      000289 00                    1213 	.db #0x00	; 0
-      00028A 00                    1214 	.db #0x00	; 0
-      00028B 00                    1215 	.db #0x00	; 0
-      00028C 00                    1216 	.db #0x00	; 0
-      00028D 00                    1217 	.db #0x00	; 0
-      00028E 00                    1218 	.db #0x00	; 0
-      00028F 00                    1219 	.db #0x00	; 0
-      000290 00                    1220 	.db #0x00	; 0
-      000291 00                    1221 	.db #0x00	; 0
-      000292 00                    1222 	.db #0x00	; 0
-      000293 00                    1223 	.db #0x00	; 0
-      000294 00                    1224 	.db #0x00	; 0
-      000295 00                    1225 	.db #0x00	; 0
-      000296 00                    1226 	.db #0x00	; 0
-      000297 00                    1227 	.db #0x00	; 0
-      000298                       1228 __xinit__character:
-      000298 7E                    1229 	.db #0x7e	; 126
-      000299 7E                    1230 	.db #0x7e	; 126
-      00029A 42                    1231 	.db #0x42	; 66	'B'
-      00029B 5A                    1232 	.db #0x5a	; 90	'Z'
-      00029C 42                    1233 	.db #0x42	; 66	'B'
-      00029D 42                    1234 	.db #0x42	; 66	'B'
-      00029E 7E                    1235 	.db #0x7e	; 126
-      00029F 7E                    1236 	.db #0x7e	; 126
-      0002A0 18                    1237 	.db #0x18	; 24
-      0002A1 18                    1238 	.db #0x18	; 24
-      0002A2 3C                    1239 	.db #0x3c	; 60
-      0002A3 3C                    1240 	.db #0x3c	; 60
-      0002A4 18                    1241 	.db #0x18	; 24
-      0002A5 18                    1242 	.db #0x18	; 24
-      0002A6 24                    1243 	.db #0x24	; 36
-      0002A7 24                    1244 	.db #0x24	; 36
-                                   1245 	.area _CABS (ABS)
+                                     37 ; special function registers
+                                     38 ;--------------------------------------------------------
+                                     39 ;--------------------------------------------------------
+                                     40 ; ram data
+                                     41 ;--------------------------------------------------------
+                                     42 	.area _DATA
+      000000                         43 _wineglass::
+      000000                         44 	.ds 12
+      00000C                         45 _bartender::
+      00000C                         46 	.ds 12
+                                     47 ;--------------------------------------------------------
+                                     48 ; ram data
+                                     49 ;--------------------------------------------------------
+                                     50 	.area _INITIALIZED
+      000000                         51 _backgroundmap::
+      000000                         52 	.ds 360
+      000168                         53 _BackgroundTiles::
+      000168                         54 	.ds 304
+      000298                         55 _Bartender::
+      000298                         56 	.ds 64
+      0002D8                         57 _moveY::
+      0002D8                         58 	.ds 1
+      0002D9                         59 _moveX::
+      0002D9                         60 	.ds 1
+      0002DA                         61 _yBounds::
+      0002DA                         62 	.ds 1
+      0002DB                         63 _character::
+      0002DB                         64 	.ds 16
+                                     65 ;--------------------------------------------------------
+                                     66 ; absolute external ram data
+                                     67 ;--------------------------------------------------------
+                                     68 	.area _DABS (ABS)
+                                     69 ;--------------------------------------------------------
+                                     70 ; global & static initialisations
+                                     71 ;--------------------------------------------------------
+                                     72 	.area _HOME
+                                     73 	.area _GSINIT
+                                     74 	.area _GSFINAL
+                                     75 	.area _GSINIT
+                                     76 ;--------------------------------------------------------
+                                     77 ; Home
+                                     78 ;--------------------------------------------------------
+                                     79 	.area _HOME
+                                     80 	.area _HOME
+                                     81 ;--------------------------------------------------------
+                                     82 ; code
+                                     83 ;--------------------------------------------------------
+                                     84 	.area _CODE
+                                     85 ;spritestructs.h:31: void LoadSpriteFrame(Sprite *sprite, uint8_t frame)
+                                     86 ;	---------------------------------
+                                     87 ; Function LoadSpriteFrame
+                                     88 ; ---------------------------------
+      000000                         89 _LoadSpriteFrame::
+      000000 E8 FC            [16]   90 	add	sp, #-4
+      000002 4B               [ 4]   91 	ld	c, e
+      000003 42               [ 4]   92 	ld	b, d
+      000004 5F               [ 4]   93 	ld	e, a
+                                     94 ;spritestructs.h:33: sprite->spritecurrentFrame = frame;
+      000005 21 04 00         [12]   95 	ld	hl, #0x0004
+      000008 09               [ 8]   96 	add	hl, bc
+      000009 73               [ 8]   97 	ld	(hl), e
+                                     98 ;spritestructs.h:35: uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
+      00000A 59               [ 4]   99 	ld	e, c
+      00000B 50               [ 4]  100 	ld	d, b
+      00000C 13               [ 8]  101 	inc	de
+      00000D 13               [ 8]  102 	inc	de
+      00000E 1A               [ 8]  103 	ld	a, (de)
+      00000F 69               [ 4]  104 	ld	l, c
+                                    105 ;	spillPairReg hl
+                                    106 ;	spillPairReg hl
+      000010 60               [ 4]  107 	ld	h, b
+                                    108 ;	spillPairReg hl
+                                    109 ;	spillPairReg hl
+      000011 23               [ 8]  110 	inc	hl
+      000012 5E               [ 8]  111 	ld	e, (hl)
+      000013 83               [ 4]  112 	add	a, e
+      000014 F8 00            [12]  113 	ldhl	sp,	#0
+      000016 77               [ 8]  114 	ld	(hl), a
+                                    115 ;spritestructs.h:37: for (uint8_t i = 0; i != spriteCount; i++)
+      000017 21 05 00         [12]  116 	ld	hl, #0x0005
+      00001A 09               [ 8]  117 	add	hl, bc
+      00001B E5               [16]  118 	push	hl
+      00001C 7D               [ 4]  119 	ld	a, l
+      00001D F8 03            [12]  120 	ldhl	sp,	#3
+      00001F 77               [ 8]  121 	ld	(hl), a
+      000020 E1               [12]  122 	pop	hl
+      000021 7C               [ 4]  123 	ld	a, h
+      000022 F8 02            [12]  124 	ldhl	sp,	#2
+      000024 22               [ 8]  125 	ld	(hl+), a
+      000025 36 00            [12]  126 	ld	(hl), #0x00
+      000027                        127 00104$:
+      000027 F8 00            [12]  128 	ldhl	sp,	#0
+      000029 7E               [ 8]  129 	ld	a, (hl)
+      00002A F8 03            [12]  130 	ldhl	sp,	#3
+      00002C 96               [ 8]  131 	sub	a, (hl)
+      00002D 28 1F            [12]  132 	jr	Z, 00106$
+                                    133 ;spritestructs.h:39: set_sprite_tile(sprite->spriteID + i, sprite->tilesetStart + i);
+      00002F F8 01            [12]  134 	ldhl	sp,#1
+      000031 2A               [ 8]  135 	ld	a, (hl+)
+      000032 5F               [ 4]  136 	ld	e, a
+      000033 2A               [ 8]  137 	ld	a, (hl+)
+      000034 57               [ 4]  138 	ld	d, a
+      000035 1A               [ 8]  139 	ld	a, (de)
+      000036 86               [ 8]  140 	add	a, (hl)
+      000037 5F               [ 4]  141 	ld	e, a
+      000038 0A               [ 8]  142 	ld	a, (bc)
+      000039 86               [ 8]  143 	add	a, (hl)
+      00003A 57               [ 4]  144 	ld	d, a
+                                    145 ;c:\gbdk\include\gb\gb.h:1804: shadow_OAM[nb].tile=tile;
+      00003B 26 00            [ 8]  146 	ld	h, #0x00
+                                    147 ;	spillPairReg hl
+                                    148 ;	spillPairReg hl
+      00003D 6A               [ 4]  149 	ld	l, d
+      00003E 29               [ 8]  150 	add	hl, hl
+      00003F 29               [ 8]  151 	add	hl, hl
+      000040 D5               [16]  152 	push	de
+      000041 11r00r00         [12]  153 	ld	de, #_shadow_OAM
+      000044 19               [ 8]  154 	add	hl, de
+      000045 23               [ 8]  155 	inc	hl
+      000046 23               [ 8]  156 	inc	hl
+      000047 D1               [12]  157 	pop	de
+      000048 73               [ 8]  158 	ld	(hl), e
+                                    159 ;spritestructs.h:37: for (uint8_t i = 0; i != spriteCount; i++)
+      000049 F8 03            [12]  160 	ldhl	sp,	#3
+      00004B 34               [12]  161 	inc	(hl)
+      00004C 18 D9            [12]  162 	jr	00104$
+      00004E                        163 00106$:
+                                    164 ;spritestructs.h:41: }
+      00004E E8 04            [16]  165 	add	sp, #4
+      000050 C9               [16]  166 	ret
+                                    167 ;spritestructs.h:43: void moveSprite (Sprite *sprite, uint8_t x, uint8_t y)
+                                    168 ;	---------------------------------
+                                    169 ; Function moveSprite
+                                    170 ; ---------------------------------
+      000051                        171 _moveSprite::
+      000051 E8 F8            [16]  172 	add	sp, #-8
+      000053 4B               [ 4]  173 	ld	c, e
+      000054 42               [ 4]  174 	ld	b, d
+      000055 F8 05            [12]  175 	ldhl	sp,	#5
+      000057 77               [ 8]  176 	ld	(hl), a
+                                    177 ;spritestructs.h:45: sprite->x = x;
+      000058 21 06 00         [12]  178 	ld	hl, #0x0006
+      00005B 09               [ 8]  179 	add	hl, bc
+      00005C 5D               [ 4]  180 	ld	e, l
+      00005D 54               [ 4]  181 	ld	d, h
+      00005E F8 05            [12]  182 	ldhl	sp,	#5
+      000060 7E               [ 8]  183 	ld	a, (hl)
+      000061 12               [ 8]  184 	ld	(de), a
+                                    185 ;spritestructs.h:46: sprite->y = y;
+      000062 21 07 00         [12]  186 	ld	hl, #0x0007
+      000065 09               [ 8]  187 	add	hl, bc
+      000066 5D               [ 4]  188 	ld	e, l
+      000067 54               [ 4]  189 	ld	d, h
+      000068 F8 0A            [12]  190 	ldhl	sp,	#10
+      00006A 7E               [ 8]  191 	ld	a, (hl)
+      00006B 12               [ 8]  192 	ld	(de), a
+                                    193 ;spritestructs.h:48: for (uint8_t iy = 0; iy!= sprite->spriteHeight; iy++)
+      00006C 21 02 00         [12]  194 	ld	hl, #0x0002
+      00006F 09               [ 8]  195 	add	hl, bc
+      000070 33               [ 8]  196 	inc	sp
+      000071 33               [ 8]  197 	inc	sp
+      000072 E5               [16]  198 	push	hl
+      000073 69               [ 4]  199 	ld	l, c
+      000074 60               [ 4]  200 	ld	h, b
+      000075 23               [ 8]  201 	inc	hl
+      000076 E5               [16]  202 	push	hl
+      000077 7D               [ 4]  203 	ld	a, l
+      000078 F8 04            [12]  204 	ldhl	sp,	#4
+      00007A 77               [ 8]  205 	ld	(hl), a
+      00007B E1               [12]  206 	pop	hl
+      00007C 7C               [ 4]  207 	ld	a, h
+      00007D F8 03            [12]  208 	ldhl	sp,	#3
+      00007F 77               [ 8]  209 	ld	(hl), a
+      000080 F8 06            [12]  210 	ldhl	sp,	#6
+      000082 36 00            [12]  211 	ld	(hl), #0x00
+      000084                        212 00108$:
+      000084 F8 02            [12]  213 	ldhl	sp,#2
+      000086 2A               [ 8]  214 	ld	a, (hl+)
+      000087 5F               [ 4]  215 	ld	e, a
+      000088 56               [ 8]  216 	ld	d, (hl)
+      000089 1A               [ 8]  217 	ld	a, (de)
+      00008A F8 07            [12]  218 	ldhl	sp,	#7
+      00008C 32               [ 8]  219 	ld	(hl-), a
+      00008D 2A               [ 8]  220 	ld	a, (hl+)
+      00008E 96               [ 8]  221 	sub	a, (hl)
+      00008F 28 5B            [12]  222 	jr	Z, 00110$
+                                    223 ;spritestructs.h:50: for (uint8_t ix = 0; ix != sprite->spriteWidth; ix++)
+      000091 F8 07            [12]  224 	ldhl	sp,	#7
+      000093 36 00            [12]  225 	ld	(hl), #0x00
+      000095                        226 00105$:
+      000095 D1               [12]  227 	pop	de
+      000096 D5               [16]  228 	push	de
+      000097 1A               [ 8]  229 	ld	a, (de)
+      000098 F8 04            [12]  230 	ldhl	sp,	#4
+      00009A 77               [ 8]  231 	ld	(hl), a
+      00009B F8 07            [12]  232 	ldhl	sp,	#7
+      00009D 7E               [ 8]  233 	ld	a, (hl)
+      00009E F8 04            [12]  234 	ldhl	sp,	#4
+      0000A0 96               [ 8]  235 	sub	a, (hl)
+      0000A1 28 44            [12]  236 	jr	Z, 00109$
+                                    237 ;spritestructs.h:52: uint8_t index = sprite->spriteID + ix + (iy * sprite->spriteWidth);
+      0000A3 0A               [ 8]  238 	ld	a, (bc)
+      0000A4 F8 07            [12]  239 	ldhl	sp,	#7
+      0000A6 86               [ 8]  240 	add	a, (hl)
+      0000A7 57               [ 4]  241 	ld	d, a
+      0000A8 C5               [16]  242 	push	bc
+      0000A9 D5               [16]  243 	push	de
+      0000AA F8 08            [12]  244 	ldhl	sp,	#8
+      0000AC 2A               [ 8]  245 	ld	a, (hl+)
+      0000AD 23               [ 8]  246 	inc	hl
+      0000AE 5F               [ 4]  247 	ld	e, a
+      0000AF 7E               [ 8]  248 	ld	a, (hl)
+      0000B0 CDr00r00         [24]  249 	call	__muluchar
+      0000B3 79               [ 4]  250 	ld	a, c
+      0000B4 D1               [12]  251 	pop	de
+      0000B5 C1               [12]  252 	pop	bc
+      0000B6 82               [ 4]  253 	add	a, d
+      0000B7 5F               [ 4]  254 	ld	e, a
+                                    255 ;spritestructs.h:54: move_sprite(index, x + (ix * 8), y + (iy * 8));
+      0000B8 F8 06            [12]  256 	ldhl	sp,	#6
+      0000BA 7E               [ 8]  257 	ld	a, (hl)
+      0000BB 87               [ 4]  258 	add	a, a
+      0000BC 87               [ 4]  259 	add	a, a
+      0000BD 87               [ 4]  260 	add	a, a
+      0000BE F8 0A            [12]  261 	ldhl	sp,	#10
+      0000C0 56               [ 8]  262 	ld	d, (hl)
+      0000C1 82               [ 4]  263 	add	a, d
+      0000C2 57               [ 4]  264 	ld	d, a
+      0000C3 F8 07            [12]  265 	ldhl	sp,	#7
+      0000C5 3A               [ 8]  266 	ld	a, (hl-)
+      0000C6 2B               [ 8]  267 	dec	hl
+      0000C7 87               [ 4]  268 	add	a, a
+      0000C8 87               [ 4]  269 	add	a, a
+      0000C9 87               [ 4]  270 	add	a, a
+      0000CA 6E               [ 8]  271 	ld	l, (hl)
+                                    272 ;	spillPairReg hl
+                                    273 ;	spillPairReg hl
+      0000CB 85               [ 4]  274 	add	a, l
+      0000CC F8 04            [12]  275 	ldhl	sp,	#4
+      0000CE 77               [ 8]  276 	ld	(hl), a
+                                    277 ;c:\gbdk\include\gb\gb.h:1877: OAM_item_t * itm = &shadow_OAM[nb];
+      0000CF 26 00            [ 8]  278 	ld	h, #0x00
+                                    279 ;	spillPairReg hl
+                                    280 ;	spillPairReg hl
+      0000D1 6B               [ 4]  281 	ld	l, e
+      0000D2 29               [ 8]  282 	add	hl, hl
+      0000D3 29               [ 8]  283 	add	hl, hl
+      0000D4 D5               [16]  284 	push	de
+      0000D5 11r00r00         [12]  285 	ld	de, #_shadow_OAM
+      0000D8 19               [ 8]  286 	add	hl, de
+      0000D9 D1               [12]  287 	pop	de
+                                    288 ;c:\gbdk\include\gb\gb.h:1878: itm->y=y, itm->x=x;
+      0000DA 7A               [ 4]  289 	ld	a, d
+      0000DB 22               [ 8]  290 	ld	(hl+), a
+      0000DC 5D               [ 4]  291 	ld	e, l
+      0000DD 54               [ 4]  292 	ld	d, h
+      0000DE F8 04            [12]  293 	ldhl	sp,	#4
+      0000E0 7E               [ 8]  294 	ld	a, (hl)
+      0000E1 12               [ 8]  295 	ld	(de), a
+                                    296 ;spritestructs.h:50: for (uint8_t ix = 0; ix != sprite->spriteWidth; ix++)
+      0000E2 F8 07            [12]  297 	ldhl	sp,	#7
+      0000E4 34               [12]  298 	inc	(hl)
+      0000E5 18 AE            [12]  299 	jr	00105$
+      0000E7                        300 00109$:
+                                    301 ;spritestructs.h:48: for (uint8_t iy = 0; iy!= sprite->spriteHeight; iy++)
+      0000E7 F8 06            [12]  302 	ldhl	sp,	#6
+      0000E9 34               [12]  303 	inc	(hl)
+      0000EA 18 98            [12]  304 	jr	00108$
+      0000EC                        305 00110$:
+                                    306 ;spritestructs.h:57: }
+      0000EC E8 08            [16]  307 	add	sp, #8
+      0000EE E1               [12]  308 	pop	hl
+      0000EF 33               [ 8]  309 	inc	sp
+      0000F0 E9               [ 4]  310 	jp	(hl)
+                                    311 ;spritestructs.h:59: void scrollSprite(Sprite *sprite, uint8_t x, uint8_t y)
+                                    312 ;	---------------------------------
+                                    313 ; Function scrollSprite
+                                    314 ; ---------------------------------
+      0000F1                        315 _scrollSprite::
+      0000F1 E8 F6            [16]  316 	add	sp, #-10
+      0000F3 F8 08            [12]  317 	ldhl	sp,	#8
+      0000F5 77               [ 8]  318 	ld	(hl), a
+                                    319 ;spritestructs.h:62: sprite->x = x;
+      0000F6 21 06 00         [12]  320 	ld	hl, #0x0006
+      0000F9 19               [ 8]  321 	add	hl, de
+      0000FA 4D               [ 4]  322 	ld	c, l
+      0000FB 44               [ 4]  323 	ld	b, h
+      0000FC F8 08            [12]  324 	ldhl	sp,	#8
+      0000FE 7E               [ 8]  325 	ld	a, (hl)
+      0000FF 02               [ 8]  326 	ld	(bc), a
+                                    327 ;spritestructs.h:63: sprite->y = y;
+      000100 21 07 00         [12]  328 	ld	hl, #0x0007
+      000103 19               [ 8]  329 	add	hl, de
+      000104 4D               [ 4]  330 	ld	c, l
+      000105 44               [ 4]  331 	ld	b, h
+      000106 F8 0C            [12]  332 	ldhl	sp,	#12
+      000108 7E               [ 8]  333 	ld	a, (hl)
+      000109 02               [ 8]  334 	ld	(bc), a
+                                    335 ;spritestructs.h:65: uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
+      00010A 4B               [ 4]  336 	ld	c, e
+      00010B 42               [ 4]  337 	ld	b, d
+      00010C 03               [ 8]  338 	inc	bc
+      00010D 03               [ 8]  339 	inc	bc
+      00010E 0A               [ 8]  340 	ld	a, (bc)
+      00010F 6B               [ 4]  341 	ld	l, e
+                                    342 ;	spillPairReg hl
+                                    343 ;	spillPairReg hl
+      000110 62               [ 4]  344 	ld	h, d
+                                    345 ;	spillPairReg hl
+                                    346 ;	spillPairReg hl
+      000111 23               [ 8]  347 	inc	hl
+      000112 4E               [ 8]  348 	ld	c, (hl)
+      000113 81               [ 4]  349 	add	a, c
+      000114 F8 00            [12]  350 	ldhl	sp,	#0
+      000116 77               [ 8]  351 	ld	(hl), a
+                                    352 ;spritestructs.h:68: scroll_sprite(sprite->tilesetStart, x, y);
+      000117 F8 0C            [12]  353 	ldhl	sp,	#12
+      000119 7E               [ 8]  354 	ld	a, (hl)
+      00011A F8 09            [12]  355 	ldhl	sp,	#9
+      00011C 77               [ 8]  356 	ld	(hl), a
+      00011D 21 05 00         [12]  357 	ld	hl, #0x0005
+      000120 19               [ 8]  358 	add	hl, de
+      000121 E5               [16]  359 	push	hl
+      000122 7D               [ 4]  360 	ld	a, l
+      000123 F8 08            [12]  361 	ldhl	sp,	#8
+      000125 77               [ 8]  362 	ld	(hl), a
+      000126 E1               [12]  363 	pop	hl
+      000127 7C               [ 4]  364 	ld	a, h
+      000128 F8 07            [12]  365 	ldhl	sp,	#7
+      00012A 77               [ 8]  366 	ld	(hl), a
+                                    367 ;spritestructs.h:66: if (spriteCount <= 2)
+      00012B 3E 02            [ 8]  368 	ld	a, #0x02
+      00012D F8 00            [12]  369 	ldhl	sp,	#0
+      00012F 96               [ 8]  370 	sub	a, (hl)
+      000130 38 69            [12]  371 	jr	C, 00114$
+                                    372 ;spritestructs.h:68: scroll_sprite(sprite->tilesetStart, x, y);
+      000132 F8 06            [12]  373 	ldhl	sp,#6
+      000134 2A               [ 8]  374 	ld	a, (hl+)
+      000135 5F               [ 4]  375 	ld	e, a
+      000136 56               [ 8]  376 	ld	d, (hl)
+      000137 1A               [ 8]  377 	ld	a, (de)
+      000138 77               [ 8]  378 	ld	(hl), a
+                                    379 ;c:\gbdk\include\gb\gb.h:1893: OAM_item_t * itm = &shadow_OAM[nb];
+      000139 3A               [ 8]  380 	ld	a, (hl-)
+      00013A 22               [ 8]  381 	ld	(hl+), a
+      00013B 36 00            [12]  382 	ld	(hl), #0x00
+      00013D 3E 02            [ 8]  383 	ld	a, #0x02
+      00013F                        384 00134$:
+      00013F F8 06            [12]  385 	ldhl	sp,	#6
+      000141 CB 26            [16]  386 	sla	(hl)
+      000143 23               [ 8]  387 	inc	hl
+      000144 CB 16            [16]  388 	rl	(hl)
+      000146 3D               [ 4]  389 	dec	a
+      000147 20 F6            [12]  390 	jr	NZ, 00134$
+      000149 11r00r00         [12]  391 	ld	de, #_shadow_OAM
+      00014C 3A               [ 8]  392 	ld	a, (hl-)
+      00014D 6E               [ 8]  393 	ld	l, (hl)
+      00014E 67               [ 4]  394 	ld	h, a
+      00014F 19               [ 8]  395 	add	hl, de
+      000150 E5               [16]  396 	push	hl
+      000151 7D               [ 4]  397 	ld	a, l
+      000152 F8 04            [12]  398 	ldhl	sp,	#4
+      000154 77               [ 8]  399 	ld	(hl), a
+      000155 E1               [12]  400 	pop	hl
+      000156 7C               [ 4]  401 	ld	a, h
+      000157 F8 03            [12]  402 	ldhl	sp,	#3
+      000159 32               [ 8]  403 	ld	(hl-), a
+      00015A 7E               [ 8]  404 	ld	a, (hl)
+      00015B F8 05            [12]  405 	ldhl	sp,	#5
+      00015D 32               [ 8]  406 	ld	(hl-), a
+      00015E 2B               [ 8]  407 	dec	hl
+      00015F 7E               [ 8]  408 	ld	a, (hl)
+      000160 F8 06            [12]  409 	ldhl	sp,	#6
+                                    410 ;c:\gbdk\include\gb\gb.h:1894: itm->y+=y, itm->x+=x;
+      000162 32               [ 8]  411 	ld	(hl-), a
+      000163 2A               [ 8]  412 	ld	a, (hl+)
+      000164 5F               [ 4]  413 	ld	e, a
+      000165 2A               [ 8]  414 	ld	a, (hl+)
+      000166 57               [ 4]  415 	ld	d, a
+      000167 1A               [ 8]  416 	ld	a, (de)
+      000168 77               [ 8]  417 	ld	(hl), a
+      000169 2A               [ 8]  418 	ld	a, (hl+)
+      00016A 23               [ 8]  419 	inc	hl
+      00016B 86               [ 8]  420 	add	a, (hl)
+      00016C 77               [ 8]  421 	ld	(hl), a
+      00016D F8 05            [12]  422 	ldhl	sp,#5
+      00016F 2A               [ 8]  423 	ld	a, (hl+)
+      000170 5F               [ 4]  424 	ld	e, a
+      000171 56               [ 8]  425 	ld	d, (hl)
+      000172 F8 09            [12]  426 	ldhl	sp,	#9
+      000174 7E               [ 8]  427 	ld	a, (hl)
+      000175 12               [ 8]  428 	ld	(de), a
+      000176 F8 05            [12]  429 	ldhl	sp,#5
+      000178 2A               [ 8]  430 	ld	a, (hl+)
+      000179 5F               [ 4]  431 	ld	e, a
+      00017A 56               [ 8]  432 	ld	d, (hl)
+      00017B 6B               [ 4]  433 	ld	l, e
+      00017C 62               [ 4]  434 	ld	h, d
+      00017D 23               [ 8]  435 	inc	hl
+      00017E E5               [16]  436 	push	hl
+      00017F 7D               [ 4]  437 	ld	a, l
+      000180 F8 05            [12]  438 	ldhl	sp,	#5
+      000182 77               [ 8]  439 	ld	(hl), a
+      000183 E1               [12]  440 	pop	hl
+      000184 7C               [ 4]  441 	ld	a, h
+      000185 F8 04            [12]  442 	ldhl	sp,	#4
+      000187 32               [ 8]  443 	ld	(hl-), a
+      000188 2A               [ 8]  444 	ld	a, (hl+)
+      000189 5F               [ 4]  445 	ld	e, a
+      00018A 56               [ 8]  446 	ld	d, (hl)
+      00018B 1A               [ 8]  447 	ld	a, (de)
+      00018C F8 09            [12]  448 	ldhl	sp,	#9
+      00018E 77               [ 8]  449 	ld	(hl), a
+      00018F 3A               [ 8]  450 	ld	a, (hl-)
+      000190 86               [ 8]  451 	add	a, (hl)
+      000191 4F               [ 4]  452 	ld	c, a
+      000192 F8 03            [12]  453 	ldhl	sp,	#3
+      000194 2A               [ 8]  454 	ld	a,	(hl+)
+      000195 66               [ 8]  455 	ld	h, (hl)
+      000196 6F               [ 4]  456 	ld	l, a
+      000197 71               [ 8]  457 	ld	(hl), c
+                                    458 ;spritestructs.h:68: scroll_sprite(sprite->tilesetStart, x, y);
+      000198 C3r25r02         [16]  459 	jp	00110$
+                                    460 ;spritestructs.h:72: for (uint8_t i = 0; i != spriteCount; i++)
+      00019B                        461 00114$:
+      00019B F8 09            [12]  462 	ldhl	sp,	#9
+      00019D 7E               [ 8]  463 	ld	a, (hl)
+      00019E F8 01            [12]  464 	ldhl	sp,	#1
+      0001A0 77               [ 8]  465 	ld	(hl), a
+      0001A1 F8 06            [12]  466 	ldhl	sp,	#6
+      0001A3 7E               [ 8]  467 	ld	a, (hl)
+      0001A4 F8 02            [12]  468 	ldhl	sp,	#2
+      0001A6 77               [ 8]  469 	ld	(hl), a
+      0001A7 F8 07            [12]  470 	ldhl	sp,	#7
+      0001A9 7E               [ 8]  471 	ld	a, (hl)
+      0001AA F8 03            [12]  472 	ldhl	sp,	#3
+      0001AC 77               [ 8]  473 	ld	(hl), a
+      0001AD F8 09            [12]  474 	ldhl	sp,	#9
+      0001AF 36 00            [12]  475 	ld	(hl), #0x00
+      0001B1                        476 00108$:
+      0001B1 F8 09            [12]  477 	ldhl	sp,	#9
+      0001B3 7E               [ 8]  478 	ld	a, (hl)
+      0001B4 F8 00            [12]  479 	ldhl	sp,	#0
+      0001B6 96               [ 8]  480 	sub	a, (hl)
+      0001B7 28 6C            [12]  481 	jr	Z, 00110$
+                                    482 ;spritestructs.h:74: scroll_sprite(sprite->tilesetStart + i, x, y);
+      0001B9 F8 02            [12]  483 	ldhl	sp,#2
+      0001BB 2A               [ 8]  484 	ld	a, (hl+)
+      0001BC 5F               [ 4]  485 	ld	e, a
+      0001BD 56               [ 8]  486 	ld	d, (hl)
+      0001BE 1A               [ 8]  487 	ld	a, (de)
+      0001BF F8 09            [12]  488 	ldhl	sp,	#9
+      0001C1 86               [ 8]  489 	add	a, (hl)
+      0001C2 4F               [ 4]  490 	ld	c, a
+                                    491 ;c:\gbdk\include\gb\gb.h:1893: OAM_item_t * itm = &shadow_OAM[nb];
+      0001C3 F8 06            [12]  492 	ldhl	sp,	#6
+      0001C5 79               [ 4]  493 	ld	a, c
+      0001C6 22               [ 8]  494 	ld	(hl+), a
+      0001C7 AF               [ 4]  495 	xor	a, a
+      0001C8 32               [ 8]  496 	ld	(hl-), a
+      0001C9 3A               [ 8]  497 	ld	a, (hl-)
+      0001CA 2B               [ 8]  498 	dec	hl
+      0001CB 22               [ 8]  499 	ld	(hl+), a
+      0001CC 36 00            [12]  500 	ld	(hl), #0x00
+      0001CE 3E 02            [ 8]  501 	ld	a, #0x02
+      0001D0                        502 00136$:
+      0001D0 F8 04            [12]  503 	ldhl	sp,	#4
+      0001D2 CB 26            [16]  504 	sla	(hl)
+      0001D4 23               [ 8]  505 	inc	hl
+      0001D5 CB 16            [16]  506 	rl	(hl)
+      0001D7 3D               [ 4]  507 	dec	a
+      0001D8 20 F6            [12]  508 	jr	NZ, 00136$
+      0001DA 2B               [ 8]  509 	dec	hl
+      0001DB 2A               [ 8]  510 	ld	a, (hl+)
+      0001DC 5F               [ 4]  511 	ld	e, a
+      0001DD 56               [ 8]  512 	ld	d, (hl)
+      0001DE 21r00r00         [12]  513 	ld	hl, #_shadow_OAM
+      0001E1 19               [ 8]  514 	add	hl, de
+      0001E2 E5               [16]  515 	push	hl
+      0001E3 7D               [ 4]  516 	ld	a, l
+      0001E4 F8 08            [12]  517 	ldhl	sp,	#8
+      0001E6 77               [ 8]  518 	ld	(hl), a
+      0001E7 E1               [12]  519 	pop	hl
+      0001E8 7C               [ 4]  520 	ld	a, h
+      0001E9 F8 07            [12]  521 	ldhl	sp,	#7
+      0001EB 32               [ 8]  522 	ld	(hl-), a
+      0001EC 3A               [ 8]  523 	ld	a, (hl-)
+      0001ED 2B               [ 8]  524 	dec	hl
+      0001EE 77               [ 8]  525 	ld	(hl), a
+      0001EF F8 07            [12]  526 	ldhl	sp,	#7
+      0001F1 3A               [ 8]  527 	ld	a, (hl-)
+      0001F2 2B               [ 8]  528 	dec	hl
+                                    529 ;c:\gbdk\include\gb\gb.h:1894: itm->y+=y, itm->x+=x;
+      0001F3 32               [ 8]  530 	ld	(hl-), a
+      0001F4 2A               [ 8]  531 	ld	a, (hl+)
+      0001F5 5F               [ 4]  532 	ld	e, a
+      0001F6 56               [ 8]  533 	ld	d, (hl)
+      0001F7 1A               [ 8]  534 	ld	a, (de)
+      0001F8 F8 01            [12]  535 	ldhl	sp,	#1
+      0001FA 86               [ 8]  536 	add	a, (hl)
+      0001FB 4F               [ 4]  537 	ld	c, a
+      0001FC F8 04            [12]  538 	ldhl	sp,	#4
+      0001FE 2A               [ 8]  539 	ld	a,	(hl+)
+      0001FF 66               [ 8]  540 	ld	h, (hl)
+      000200 6F               [ 4]  541 	ld	l, a
+      000201 71               [ 8]  542 	ld	(hl), c
+      000202 F8 04            [12]  543 	ldhl	sp,#4
+      000204 2A               [ 8]  544 	ld	a, (hl+)
+      000205 5F               [ 4]  545 	ld	e, a
+      000206 56               [ 8]  546 	ld	d, (hl)
+      000207 6B               [ 4]  547 	ld	l, e
+      000208 62               [ 4]  548 	ld	h, d
+      000209 23               [ 8]  549 	inc	hl
+      00020A E5               [16]  550 	push	hl
+      00020B 7D               [ 4]  551 	ld	a, l
+      00020C F8 08            [12]  552 	ldhl	sp,	#8
+      00020E 77               [ 8]  553 	ld	(hl), a
+      00020F E1               [12]  554 	pop	hl
+      000210 7C               [ 4]  555 	ld	a, h
+      000211 F8 07            [12]  556 	ldhl	sp,	#7
+      000213 32               [ 8]  557 	ld	(hl-), a
+      000214 2A               [ 8]  558 	ld	a, (hl+)
+      000215 5F               [ 4]  559 	ld	e, a
+      000216 2A               [ 8]  560 	ld	a, (hl+)
+      000217 57               [ 4]  561 	ld	d, a
+      000218 1A               [ 8]  562 	ld	a, (de)
+      000219 86               [ 8]  563 	add	a, (hl)
+      00021A 2B               [ 8]  564 	dec	hl
+      00021B 4F               [ 4]  565 	ld	c, a
+      00021C 3A               [ 8]  566 	ld	a, (hl-)
+      00021D 6E               [ 8]  567 	ld	l, (hl)
+      00021E 67               [ 4]  568 	ld	h, a
+      00021F 71               [ 8]  569 	ld	(hl), c
+                                    570 ;spritestructs.h:72: for (uint8_t i = 0; i != spriteCount; i++)
+      000220 F8 09            [12]  571 	ldhl	sp,	#9
+      000222 34               [12]  572 	inc	(hl)
+      000223 18 8C            [12]  573 	jr	00108$
+      000225                        574 00110$:
+                                    575 ;spritestructs.h:82: }
+      000225 E8 0A            [16]  576 	add	sp, #10
+      000227 E1               [12]  577 	pop	hl
+      000228 33               [ 8]  578 	inc	sp
+      000229 E9               [ 4]  579 	jp	(hl)
+                                    580 ;spritestructs.h:84: void playerMovement(Sprite *sprite)
+                                    581 ;	---------------------------------
+                                    582 ; Function playerMovement
+                                    583 ; ---------------------------------
+      00022A                        584 _playerMovement::
+      00022A E8 FD            [16]  585 	add	sp, #-3
+                                    586 ;spritestructs.h:88: int8_t moveX = 0;
+      00022C 0E 00            [ 8]  587 	ld	c, #0x00
+                                    588 ;spritestructs.h:89: uint8_t buttons = joypad();
+      00022E D5               [16]  589 	push	de
+      00022F CDr00r00         [24]  590 	call	_joypad
+      000232 47               [ 4]  591 	ld	b, a
+      000233 D1               [12]  592 	pop	de
+                                    593 ;spritestructs.h:94: uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
+      000234 6B               [ 4]  594 	ld	l, e
+                                    595 ;	spillPairReg hl
+                                    596 ;	spillPairReg hl
+      000235 62               [ 4]  597 	ld	h, d
+                                    598 ;	spillPairReg hl
+                                    599 ;	spillPairReg hl
+      000236 23               [ 8]  600 	inc	hl
+      000237 23               [ 8]  601 	inc	hl
+      000238 7E               [ 8]  602 	ld	a, (hl)
+      000239 6B               [ 4]  603 	ld	l, e
+                                    604 ;	spillPairReg hl
+                                    605 ;	spillPairReg hl
+      00023A 62               [ 4]  606 	ld	h, d
+                                    607 ;	spillPairReg hl
+                                    608 ;	spillPairReg hl
+      00023B 23               [ 8]  609 	inc	hl
+      00023C 6E               [ 8]  610 	ld	l, (hl)
+                                    611 ;	spillPairReg hl
+      00023D 85               [ 4]  612 	add	a, l
+      00023E F8 00            [12]  613 	ldhl	sp,	#0
+      000240 77               [ 8]  614 	ld	(hl), a
+                                    615 ;spritestructs.h:97: if (buttons & J_LEFT){
+      000241 CB 48            [ 8]  616 	bit	1, b
+      000243 28 02            [12]  617 	jr	Z, 00102$
+                                    618 ;spritestructs.h:98: moveX = -1;
+      000245 0E FF            [ 8]  619 	ld	c, #0xff
+      000247                        620 00102$:
+                                    621 ;spritestructs.h:100: if (buttons & J_RIGHT){
+      000247 CB 40            [ 8]  622 	bit	0, b
+      000249 28 02            [12]  623 	jr	Z, 00115$
+                                    624 ;spritestructs.h:101: moveX = 1;
+      00024B 0E 01            [ 8]  625 	ld	c, #0x01
+                                    626 ;spritestructs.h:104: for (uint8_t i = 0; i != spriteCount; i++)
+      00024D                        627 00115$:
+      00024D 21 05 00         [12]  628 	ld	hl, #0x0005
+      000250 19               [ 8]  629 	add	hl, de
+      000251 E5               [16]  630 	push	hl
+      000252 7D               [ 4]  631 	ld	a, l
+      000253 F8 03            [12]  632 	ldhl	sp,	#3
+      000255 77               [ 8]  633 	ld	(hl), a
+      000256 E1               [12]  634 	pop	hl
+      000257 7C               [ 4]  635 	ld	a, h
+      000258 F8 02            [12]  636 	ldhl	sp,	#2
+      00025A 77               [ 8]  637 	ld	(hl), a
+      00025B 06 00            [ 8]  638 	ld	b, #0x00
+      00025D                        639 00108$:
+      00025D F8 00            [12]  640 	ldhl	sp,	#0
+      00025F 7E               [ 8]  641 	ld	a, (hl)
+      000260 90               [ 4]  642 	sub	a, b
+      000261 28 18            [12]  643 	jr	Z, 00110$
+                                    644 ;spritestructs.h:106: scroll_sprite(sprite->tilesetStart + i, moveX, 0);
+      000263 F8 01            [12]  645 	ldhl	sp,#1
+      000265 2A               [ 8]  646 	ld	a, (hl+)
+      000266 5F               [ 4]  647 	ld	e, a
+      000267 56               [ 8]  648 	ld	d, (hl)
+      000268 1A               [ 8]  649 	ld	a, (de)
+      000269 80               [ 4]  650 	add	a, b
+                                    651 ;c:\gbdk\include\gb\gb.h:1893: OAM_item_t * itm = &shadow_OAM[nb];
+      00026A 6F               [ 4]  652 	ld	l, a
+                                    653 ;	spillPairReg hl
+                                    654 ;	spillPairReg hl
+      00026B 26 00            [ 8]  655 	ld	h, #0x00
+                                    656 ;	spillPairReg hl
+                                    657 ;	spillPairReg hl
+      00026D 29               [ 8]  658 	add	hl, hl
+      00026E 29               [ 8]  659 	add	hl, hl
+      00026F 11r00r00         [12]  660 	ld	de, #_shadow_OAM
+      000272 19               [ 8]  661 	add	hl, de
+                                    662 ;c:\gbdk\include\gb\gb.h:1894: itm->y+=y, itm->x+=x;
+      000273 7E               [ 8]  663 	ld	a, (hl)
+      000274 22               [ 8]  664 	ld	(hl+), a
+      000275 7E               [ 8]  665 	ld	a, (hl)
+      000276 81               [ 4]  666 	add	a, c
+      000277 77               [ 8]  667 	ld	(hl), a
+                                    668 ;spritestructs.h:104: for (uint8_t i = 0; i != spriteCount; i++)
+      000278 04               [ 4]  669 	inc	b
+      000279 18 E2            [12]  670 	jr	00108$
+      00027B                        671 00110$:
+                                    672 ;spritestructs.h:108: }
+      00027B E8 03            [16]  673 	add	sp, #3
+      00027D C9               [16]  674 	ret
+                                    675 ;spritestructs.h:115: void setupSprites(Sprite *sprite, uint8_t spriteID, int8_t spriteHeight, uint8_t spriteWidth, uint8_t spriteFrames, uint8_t tilesetStart, uint8_t x, uint8_t y,
+                                    676 ;	---------------------------------
+                                    677 ; Function setupSprites
+                                    678 ; ---------------------------------
+      00027E                        679 _setupSprites::
+      00027E 3B               [ 8]  680 	dec	sp
+      00027F F8 00            [12]  681 	ldhl	sp,	#0
+      000281 77               [ 8]  682 	ld	(hl), a
+                                    683 ;spritestructs.h:118: sprite->tileset = tileset;
+      000282 21 0A 00         [12]  684 	ld	hl, #0x000a
+      000285 19               [ 8]  685 	add	hl, de
+      000286 4D               [ 4]  686 	ld	c, l
+      000287 44               [ 4]  687 	ld	b, h
+      000288 F8 0B            [12]  688 	ldhl	sp,	#11
+      00028A 2A               [ 8]  689 	ld	a, (hl+)
+      00028B 02               [ 8]  690 	ld	(bc), a
+      00028C 03               [ 8]  691 	inc	bc
+      00028D 7E               [ 8]  692 	ld	a, (hl)
+      00028E 02               [ 8]  693 	ld	(bc), a
+                                    694 ;spritestructs.h:119: sprite->tilesetStart = tilesetStart;
+      00028F 21 05 00         [12]  695 	ld	hl, #0x0005
+      000292 19               [ 8]  696 	add	hl, de
+      000293 4D               [ 4]  697 	ld	c, l
+      000294 44               [ 4]  698 	ld	b, h
+      000295 F8 06            [12]  699 	ldhl	sp,	#6
+      000297 7E               [ 8]  700 	ld	a, (hl)
+      000298 02               [ 8]  701 	ld	(bc), a
+                                    702 ;spritestructs.h:120: sprite->spriteID = spriteID;
+      000299 F8 00            [12]  703 	ldhl	sp,	#0
+      00029B 7E               [ 8]  704 	ld	a, (hl)
+      00029C 12               [ 8]  705 	ld	(de), a
+                                    706 ;spritestructs.h:121: sprite->spriteHeight = spriteHeight;
+      00029D 4B               [ 4]  707 	ld	c, e
+      00029E 42               [ 4]  708 	ld	b, d
+      00029F 03               [ 8]  709 	inc	bc
+      0002A0 F8 03            [12]  710 	ldhl	sp,	#3
+                                    711 ;spritestructs.h:122: sprite->spriteWidth = spriteWidth;
+      0002A2 2A               [ 8]  712 	ld	a, (hl+)
+      0002A3 02               [ 8]  713 	ld	(bc), a
+      0002A4 4B               [ 4]  714 	ld	c, e
+      0002A5 42               [ 4]  715 	ld	b, d
+      0002A6 03               [ 8]  716 	inc	bc
+      0002A7 03               [ 8]  717 	inc	bc
+                                    718 ;spritestructs.h:123: sprite->spriteFrames = spriteFrames;
+      0002A8 2A               [ 8]  719 	ld	a, (hl+)
+      0002A9 02               [ 8]  720 	ld	(bc), a
+      0002AA 4B               [ 4]  721 	ld	c, e
+      0002AB 42               [ 4]  722 	ld	b, d
+      0002AC 03               [ 8]  723 	inc	bc
+      0002AD 03               [ 8]  724 	inc	bc
+      0002AE 03               [ 8]  725 	inc	bc
+      0002AF 7E               [ 8]  726 	ld	a, (hl)
+      0002B0 02               [ 8]  727 	ld	(bc), a
+                                    728 ;spritestructs.h:125: sprite->x = x;
+      0002B1 21 06 00         [12]  729 	ld	hl, #0x0006
+      0002B4 19               [ 8]  730 	add	hl, de
+      0002B5 4D               [ 4]  731 	ld	c, l
+      0002B6 44               [ 4]  732 	ld	b, h
+      0002B7 F8 07            [12]  733 	ldhl	sp,	#7
+      0002B9 7E               [ 8]  734 	ld	a, (hl)
+      0002BA 02               [ 8]  735 	ld	(bc), a
+                                    736 ;spritestructs.h:126: sprite->y = y;
+      0002BB 21 07 00         [12]  737 	ld	hl, #0x0007
+      0002BE 19               [ 8]  738 	add	hl, de
+      0002BF 4D               [ 4]  739 	ld	c, l
+      0002C0 44               [ 4]  740 	ld	b, h
+      0002C1 F8 08            [12]  741 	ldhl	sp,	#8
+      0002C3 7E               [ 8]  742 	ld	a, (hl)
+      0002C4 02               [ 8]  743 	ld	(bc), a
+                                    744 ;spritestructs.h:127: sprite->velocityX = velocityX;
+      0002C5 21 08 00         [12]  745 	ld	hl, #0x0008
+      0002C8 19               [ 8]  746 	add	hl, de
+      0002C9 4D               [ 4]  747 	ld	c, l
+      0002CA 44               [ 4]  748 	ld	b, h
+      0002CB F8 09            [12]  749 	ldhl	sp,	#9
+      0002CD 7E               [ 8]  750 	ld	a, (hl)
+      0002CE 02               [ 8]  751 	ld	(bc), a
+                                    752 ;spritestructs.h:128: sprite->velocityY = velocityY;
+      0002CF 21 09 00         [12]  753 	ld	hl, #0x0009
+      0002D2 19               [ 8]  754 	add	hl, de
+      0002D3 4D               [ 4]  755 	ld	c, l
+      0002D4 44               [ 4]  756 	ld	b, h
+      0002D5 F8 0A            [12]  757 	ldhl	sp,	#10
+      0002D7 7E               [ 8]  758 	ld	a, (hl)
+      0002D8 02               [ 8]  759 	ld	(bc), a
+                                    760 ;spritestructs.h:130: LoadSpriteFrame(sprite, 0);
+      0002D9 AF               [ 4]  761 	xor	a, a
+      0002DA CDr00r00         [24]  762 	call	_LoadSpriteFrame
+                                    763 ;spritestructs.h:137: }
+      0002DD 33               [ 8]  764 	inc	sp
+      0002DE E1               [12]  765 	pop	hl
+      0002DF E8 0A            [16]  766 	add	sp, #10
+      0002E1 E9               [ 4]  767 	jp	(hl)
+                                    768 ;main.c:46: void setBackground(void){
+                                    769 ;	---------------------------------
+                                    770 ; Function setBackground
+                                    771 ; ---------------------------------
+      0002E2                        772 _setBackground::
+                                    773 ;main.c:48: set_bkg_data(0, 18, BackgroundTiles);
+      0002E2 11r68r01         [12]  774 	ld	de, #_BackgroundTiles
+      0002E5 D5               [16]  775 	push	de
+      0002E6 21 00 12         [12]  776 	ld	hl, #0x1200
+      0002E9 E5               [16]  777 	push	hl
+      0002EA CDr00r00         [24]  778 	call	_set_bkg_data
+      0002ED E8 04            [16]  779 	add	sp, #4
+                                    780 ;main.c:49: set_bkg_tiles(0, 0, 20, 18, backgroundmap);
+      0002EF 11r00r00         [12]  781 	ld	de, #_backgroundmap
+      0002F2 D5               [16]  782 	push	de
+      0002F3 21 14 12         [12]  783 	ld	hl, #0x1214
+      0002F6 E5               [16]  784 	push	hl
+      0002F7 AF               [ 4]  785 	xor	a, a
+      0002F8 0F               [ 4]  786 	rrca
+      0002F9 F5               [16]  787 	push	af
+      0002FA CDr00r00         [24]  788 	call	_set_bkg_tiles
+      0002FD E8 06            [16]  789 	add	sp, #6
+                                    790 ;main.c:52: }
+      0002FF C9               [16]  791 	ret
+      000300                        792 _BKGtile:
+      000300 FF                     793 	.db #0xff	; 255
+      000301 00                     794 	.db #0x00	; 0
+      000302 81                     795 	.db #0x81	; 129
+      000303 7E                     796 	.db #0x7e	; 126
+      000304 BD                     797 	.db #0xbd	; 189
+      000305 42                     798 	.db #0x42	; 66	'B'
+      000306 A5                     799 	.db #0xa5	; 165
+      000307 5A                     800 	.db #0x5a	; 90	'Z'
+      000308 A5                     801 	.db #0xa5	; 165
+      000309 5A                     802 	.db #0x5a	; 90	'Z'
+      00030A BD                     803 	.db #0xbd	; 189
+      00030B 42                     804 	.db #0x42	; 66	'B'
+      00030C 81                     805 	.db #0x81	; 129
+      00030D 7E                     806 	.db #0x7e	; 126
+      00030E FF                     807 	.db #0xff	; 255
+      00030F 00                     808 	.db #0x00	; 0
+      000310                        809 _pint:
+      000310 7E                     810 	.db #0x7e	; 126
+      000311 42                     811 	.db #0x42	; 66	'B'
+      000312 42                     812 	.db #0x42	; 66	'B'
+      000313 7E                     813 	.db #0x7e	; 126
+      000314 42                     814 	.db #0x42	; 66	'B'
+      000315 7E                     815 	.db #0x7e	; 126
+      000316 42                     816 	.db #0x42	; 66	'B'
+      000317 7E                     817 	.db #0x7e	; 126
+      000318 42                     818 	.db #0x42	; 66	'B'
+      000319 7E                     819 	.db #0x7e	; 126
+      00031A 42                     820 	.db #0x42	; 66	'B'
+      00031B 7E                     821 	.db #0x7e	; 126
+      00031C 42                     822 	.db #0x42	; 66	'B'
+      00031D 7E                     823 	.db #0x7e	; 126
+      00031E 3C                     824 	.db #0x3c	; 60
+      00031F 3C                     825 	.db #0x3c	; 60
+      000320                        826 _Wine:
+      000320 42                     827 	.db #0x42	; 66	'B'
+      000321 7E                     828 	.db #0x7e	; 126
+      000322 42                     829 	.db #0x42	; 66	'B'
+      000323 7E                     830 	.db #0x7e	; 126
+      000324 42                     831 	.db #0x42	; 66	'B'
+      000325 7E                     832 	.db #0x7e	; 126
+      000326 3C                     833 	.db #0x3c	; 60
+      000327 3C                     834 	.db #0x3c	; 60
+      000328 18                     835 	.db #0x18	; 24
+      000329 18                     836 	.db #0x18	; 24
+      00032A 18                     837 	.db #0x18	; 24
+      00032B 18                     838 	.db #0x18	; 24
+      00032C 18                     839 	.db #0x18	; 24
+      00032D 18                     840 	.db #0x18	; 24
+      00032E 3C                     841 	.db #0x3c	; 60
+      00032F 3C                     842 	.db #0x3c	; 60
+                                    843 ;main.c:54: void loadSprites(void)
+                                    844 ;	---------------------------------
+                                    845 ; Function loadSprites
+                                    846 ; ---------------------------------
+      000330                        847 _loadSprites::
+                                    848 ;main.c:56: set_sprite_data(0, 1, Wine);
+      000330 11r20r03         [12]  849 	ld	de, #_Wine
+      000333 D5               [16]  850 	push	de
+      000334 AF               [ 4]  851 	xor	a, a
+      000335 3C               [ 4]  852 	inc	a
+      000336 F5               [16]  853 	push	af
+      000337 CDr00r00         [24]  854 	call	_set_sprite_data
+      00033A E8 04            [16]  855 	add	sp, #4
+                                    856 ;main.c:57: set_sprite_data(1, 4, Bartender);
+      00033C 11r98r02         [12]  857 	ld	de, #_Bartender
+      00033F D5               [16]  858 	push	de
+      000340 21 01 04         [12]  859 	ld	hl, #0x401
+      000343 E5               [16]  860 	push	hl
+      000344 CDr00r00         [24]  861 	call	_set_sprite_data
+      000347 E8 04            [16]  862 	add	sp, #4
+                                    863 ;main.c:60: }
+      000349 C9               [16]  864 	ret
+                                    865 ;main.c:80: void main(void)
+                                    866 ;	---------------------------------
+                                    867 ; Function main
+                                    868 ; ---------------------------------
+      00034A                        869 _main::
+                                    870 ;main.c:85: SHOW_BKG;
+      00034A F0r00            [12]  871 	ldh	a, (_LCDC_REG + 0)
+      00034C F6 01            [ 8]  872 	or	a, #0x01
+      00034E E0r00            [12]  873 	ldh	(_LCDC_REG + 0), a
+                                    874 ;main.c:86: SHOW_SPRITES;
+      000350 F0r00            [12]  875 	ldh	a, (_LCDC_REG + 0)
+      000352 F6 02            [ 8]  876 	or	a, #0x02
+      000354 E0r00            [12]  877 	ldh	(_LCDC_REG + 0), a
+                                    878 ;main.c:88: setBackground();
+      000356 CDrE2r02         [24]  879 	call	_setBackground
+                                    880 ;main.c:89: loadSprites();
+      000359 CDr30r03         [24]  881 	call	_loadSprites
+                                    882 ;main.c:91: setupSprites(&bartender, 1, 2, 2, 4, 1, 30, 30, 0, 0, Bartender);
+      00035C 11r98r02         [12]  883 	ld	de, #_Bartender
+      00035F D5               [16]  884 	push	de
+      000360 AF               [ 4]  885 	xor	a, a
+      000361 0F               [ 4]  886 	rrca
+      000362 F5               [16]  887 	push	af
+      000363 21 1E 1E         [12]  888 	ld	hl, #0x1e1e
+      000366 E5               [16]  889 	push	hl
+      000367 21 04 01         [12]  890 	ld	hl, #0x104
+      00036A E5               [16]  891 	push	hl
+      00036B 21 02 02         [12]  892 	ld	hl, #0x202
+      00036E E5               [16]  893 	push	hl
+      00036F 3E 01            [ 8]  894 	ld	a, #0x01
+      000371 11r0Cr00         [12]  895 	ld	de, #_bartender
+      000374 CDr7Er02         [24]  896 	call	_setupSprites
+                                    897 ;main.c:92: setupSprites(&wineglass, 0, 1, 1, 1, 0, 30, 30, 0, 0, Wine);
+      000377 11r20r03         [12]  898 	ld	de, #_Wine
+      00037A D5               [16]  899 	push	de
+      00037B AF               [ 4]  900 	xor	a, a
+      00037C 0F               [ 4]  901 	rrca
+      00037D F5               [16]  902 	push	af
+      00037E 21 1E 1E         [12]  903 	ld	hl, #0x1e1e
+      000381 E5               [16]  904 	push	hl
+      000382 21 01 00         [12]  905 	ld	hl, #0x01
+      000385 E5               [16]  906 	push	hl
+      000386 21 01 01         [12]  907 	ld	hl, #0x101
+      000389 E5               [16]  908 	push	hl
+      00038A AF               [ 4]  909 	xor	a, a
+      00038B 11r00r00         [12]  910 	ld	de, #_wineglass
+      00038E CDr7Er02         [24]  911 	call	_setupSprites
+                                    912 ;main.c:95: moveSprite(&wineglass, 20, 30);
+      000391 3E 1E            [ 8]  913 	ld	a, #0x1e
+      000393 F5               [16]  914 	push	af
+      000394 33               [ 8]  915 	inc	sp
+      000395 3E 14            [ 8]  916 	ld	a, #0x14
+      000397 11r00r00         [12]  917 	ld	de, #_wineglass
+      00039A CDr51r00         [24]  918 	call	_moveSprite
+                                    919 ;main.c:96: moveSprite(&bartender, 80, 140);
+      00039D 3E 8C            [ 8]  920 	ld	a, #0x8c
+      00039F F5               [16]  921 	push	af
+      0003A0 33               [ 8]  922 	inc	sp
+      0003A1 3E 50            [ 8]  923 	ld	a, #0x50
+      0003A3 11r0Cr00         [12]  924 	ld	de, #_bartender
+      0003A6 CDr51r00         [24]  925 	call	_moveSprite
+                                    926 ;main.c:99: while (1) {
+      0003A9                        927 00102$:
+                                    928 ;main.c:101: playerMovement(&bartender);
+      0003A9 11r0Cr00         [12]  929 	ld	de, #_bartender
+      0003AC CDr2Ar02         [24]  930 	call	_playerMovement
+                                    931 ;main.c:103: scrollSprite(&wineglass, moveX, moveY);
+      0003AF FArD8r02         [16]  932 	ld	a, (#_moveY)
+      0003B2 F5               [16]  933 	push	af
+      0003B3 33               [ 8]  934 	inc	sp
+      0003B4 FArD9r02         [16]  935 	ld	a, (#_moveX)
+      0003B7 11r00r00         [12]  936 	ld	de, #_wineglass
+      0003BA CDrF1r00         [24]  937 	call	_scrollSprite
+                                    938 ;main.c:104: wait_vbl_done();
+      0003BD CDr00r00         [24]  939 	call	_wait_vbl_done
+                                    940 ;main.c:109: }
+      0003C0 18 E7            [12]  941 	jr	00102$
+                                    942 	.area _CODE
+                                    943 	.area _INITIALIZER
+      000000                        944 __xinit__backgroundmap:
+      000000 07                     945 	.db #0x07	; 7
+      000001 07                     946 	.db #0x07	; 7
+      000002 07                     947 	.db #0x07	; 7
+      000003 07                     948 	.db #0x07	; 7
+      000004 07                     949 	.db #0x07	; 7
+      000005 07                     950 	.db #0x07	; 7
+      000006 07                     951 	.db #0x07	; 7
+      000007 07                     952 	.db #0x07	; 7
+      000008 07                     953 	.db #0x07	; 7
+      000009 07                     954 	.db #0x07	; 7
+      00000A 07                     955 	.db #0x07	; 7
+      00000B 07                     956 	.db #0x07	; 7
+      00000C 07                     957 	.db #0x07	; 7
+      00000D 07                     958 	.db #0x07	; 7
+      00000E 07                     959 	.db #0x07	; 7
+      00000F 07                     960 	.db #0x07	; 7
+      000010 07                     961 	.db #0x07	; 7
+      000011 07                     962 	.db #0x07	; 7
+      000012 07                     963 	.db #0x07	; 7
+      000013 07                     964 	.db #0x07	; 7
+      000014 07                     965 	.db #0x07	; 7
+      000015 05                     966 	.db #0x05	; 5
+      000016 05                     967 	.db #0x05	; 5
+      000017 05                     968 	.db #0x05	; 5
+      000018 05                     969 	.db #0x05	; 5
+      000019 05                     970 	.db #0x05	; 5
+      00001A 05                     971 	.db #0x05	; 5
+      00001B 05                     972 	.db #0x05	; 5
+      00001C 05                     973 	.db #0x05	; 5
+      00001D 05                     974 	.db #0x05	; 5
+      00001E 05                     975 	.db #0x05	; 5
+      00001F 05                     976 	.db #0x05	; 5
+      000020 05                     977 	.db #0x05	; 5
+      000021 05                     978 	.db #0x05	; 5
+      000022 05                     979 	.db #0x05	; 5
+      000023 05                     980 	.db #0x05	; 5
+      000024 05                     981 	.db #0x05	; 5
+      000025 05                     982 	.db #0x05	; 5
+      000026 05                     983 	.db #0x05	; 5
+      000027 07                     984 	.db #0x07	; 7
+      000028 07                     985 	.db #0x07	; 7
+      000029 05                     986 	.db #0x05	; 5
+      00002A 05                     987 	.db #0x05	; 5
+      00002B 05                     988 	.db #0x05	; 5
+      00002C 05                     989 	.db #0x05	; 5
+      00002D 05                     990 	.db #0x05	; 5
+      00002E 05                     991 	.db #0x05	; 5
+      00002F 05                     992 	.db #0x05	; 5
+      000030 05                     993 	.db #0x05	; 5
+      000031 05                     994 	.db #0x05	; 5
+      000032 05                     995 	.db #0x05	; 5
+      000033 05                     996 	.db #0x05	; 5
+      000034 05                     997 	.db #0x05	; 5
+      000035 05                     998 	.db #0x05	; 5
+      000036 05                     999 	.db #0x05	; 5
+      000037 05                    1000 	.db #0x05	; 5
+      000038 05                    1001 	.db #0x05	; 5
+      000039 05                    1002 	.db #0x05	; 5
+      00003A 05                    1003 	.db #0x05	; 5
+      00003B 07                    1004 	.db #0x07	; 7
+      00003C 07                    1005 	.db #0x07	; 7
+      00003D 05                    1006 	.db #0x05	; 5
+      00003E 05                    1007 	.db #0x05	; 5
+      00003F 05                    1008 	.db #0x05	; 5
+      000040 05                    1009 	.db #0x05	; 5
+      000041 05                    1010 	.db #0x05	; 5
+      000042 05                    1011 	.db #0x05	; 5
+      000043 05                    1012 	.db #0x05	; 5
+      000044 05                    1013 	.db #0x05	; 5
+      000045 05                    1014 	.db #0x05	; 5
+      000046 05                    1015 	.db #0x05	; 5
+      000047 05                    1016 	.db #0x05	; 5
+      000048 05                    1017 	.db #0x05	; 5
+      000049 05                    1018 	.db #0x05	; 5
+      00004A 05                    1019 	.db #0x05	; 5
+      00004B 05                    1020 	.db #0x05	; 5
+      00004C 05                    1021 	.db #0x05	; 5
+      00004D 05                    1022 	.db #0x05	; 5
+      00004E 05                    1023 	.db #0x05	; 5
+      00004F 07                    1024 	.db #0x07	; 7
+      000050 07                    1025 	.db #0x07	; 7
+      000051 05                    1026 	.db #0x05	; 5
+      000052 00                    1027 	.db #0x00	; 0
+      000053 00                    1028 	.db #0x00	; 0
+      000054 0E                    1029 	.db #0x0e	; 14
+      000055 0E                    1030 	.db #0x0e	; 14
+      000056 0E                    1031 	.db #0x0e	; 14
+      000057 0E                    1032 	.db #0x0e	; 14
+      000058 00                    1033 	.db #0x00	; 0
+      000059 00                    1034 	.db #0x00	; 0
+      00005A 00                    1035 	.db #0x00	; 0
+      00005B 00                    1036 	.db #0x00	; 0
+      00005C 0E                    1037 	.db #0x0e	; 14
+      00005D 0E                    1038 	.db #0x0e	; 14
+      00005E 0E                    1039 	.db #0x0e	; 14
+      00005F 0E                    1040 	.db #0x0e	; 14
+      000060 00                    1041 	.db #0x00	; 0
+      000061 00                    1042 	.db #0x00	; 0
+      000062 05                    1043 	.db #0x05	; 5
+      000063 07                    1044 	.db #0x07	; 7
+      000064 07                    1045 	.db #0x07	; 7
+      000065 05                    1046 	.db #0x05	; 5
+      000066 00                    1047 	.db #0x00	; 0
+      000067 00                    1048 	.db #0x00	; 0
+      000068 0D                    1049 	.db #0x0d	; 13
+      000069 0D                    1050 	.db #0x0d	; 13
+      00006A 0D                    1051 	.db #0x0d	; 13
+      00006B 0D                    1052 	.db #0x0d	; 13
+      00006C 00                    1053 	.db #0x00	; 0
+      00006D 00                    1054 	.db #0x00	; 0
+      00006E 00                    1055 	.db #0x00	; 0
+      00006F 00                    1056 	.db #0x00	; 0
+      000070 0D                    1057 	.db #0x0d	; 13
+      000071 0D                    1058 	.db #0x0d	; 13
+      000072 0D                    1059 	.db #0x0d	; 13
+      000073 0D                    1060 	.db #0x0d	; 13
+      000074 00                    1061 	.db #0x00	; 0
+      000075 00                    1062 	.db #0x00	; 0
+      000076 05                    1063 	.db #0x05	; 5
+      000077 07                    1064 	.db #0x07	; 7
+      000078 07                    1065 	.db #0x07	; 7
+      000079 05                    1066 	.db #0x05	; 5
+      00007A 00                    1067 	.db #0x00	; 0
+      00007B 00                    1068 	.db #0x00	; 0
+      00007C 00                    1069 	.db #0x00	; 0
+      00007D 00                    1070 	.db #0x00	; 0
+      00007E 00                    1071 	.db #0x00	; 0
+      00007F 00                    1072 	.db #0x00	; 0
+      000080 00                    1073 	.db #0x00	; 0
+      000081 00                    1074 	.db #0x00	; 0
+      000082 00                    1075 	.db #0x00	; 0
+      000083 00                    1076 	.db #0x00	; 0
+      000084 00                    1077 	.db #0x00	; 0
+      000085 00                    1078 	.db #0x00	; 0
+      000086 00                    1079 	.db #0x00	; 0
+      000087 00                    1080 	.db #0x00	; 0
+      000088 00                    1081 	.db #0x00	; 0
+      000089 00                    1082 	.db #0x00	; 0
+      00008A 05                    1083 	.db #0x05	; 5
+      00008B 07                    1084 	.db #0x07	; 7
+      00008C 07                    1085 	.db #0x07	; 7
+      00008D 05                    1086 	.db #0x05	; 5
+      00008E 0C                    1087 	.db #0x0c	; 12
+      00008F 0C                    1088 	.db #0x0c	; 12
+      000090 0C                    1089 	.db #0x0c	; 12
+      000091 0C                    1090 	.db #0x0c	; 12
+      000092 0C                    1091 	.db #0x0c	; 12
+      000093 00                    1092 	.db #0x00	; 0
+      000094 00                    1093 	.db #0x00	; 0
+      000095 00                    1094 	.db #0x00	; 0
+      000096 00                    1095 	.db #0x00	; 0
+      000097 00                    1096 	.db #0x00	; 0
+      000098 00                    1097 	.db #0x00	; 0
+      000099 00                    1098 	.db #0x00	; 0
+      00009A 00                    1099 	.db #0x00	; 0
+      00009B 00                    1100 	.db #0x00	; 0
+      00009C 00                    1101 	.db #0x00	; 0
+      00009D 00                    1102 	.db #0x00	; 0
+      00009E 05                    1103 	.db #0x05	; 5
+      00009F 07                    1104 	.db #0x07	; 7
+      0000A0 07                    1105 	.db #0x07	; 7
+      0000A1 05                    1106 	.db #0x05	; 5
+      0000A2 09                    1107 	.db #0x09	; 9
+      0000A3 09                    1108 	.db #0x09	; 9
+      0000A4 09                    1109 	.db #0x09	; 9
+      0000A5 09                    1110 	.db #0x09	; 9
+      0000A6 09                    1111 	.db #0x09	; 9
+      0000A7 00                    1112 	.db #0x00	; 0
+      0000A8 00                    1113 	.db #0x00	; 0
+      0000A9 00                    1114 	.db #0x00	; 0
+      0000AA 00                    1115 	.db #0x00	; 0
+      0000AB 00                    1116 	.db #0x00	; 0
+      0000AC 00                    1117 	.db #0x00	; 0
+      0000AD 08                    1118 	.db #0x08	; 8
+      0000AE 08                    1119 	.db #0x08	; 8
+      0000AF 08                    1120 	.db #0x08	; 8
+      0000B0 08                    1121 	.db #0x08	; 8
+      0000B1 08                    1122 	.db #0x08	; 8
+      0000B2 05                    1123 	.db #0x05	; 5
+      0000B3 07                    1124 	.db #0x07	; 7
+      0000B4 07                    1125 	.db #0x07	; 7
+      0000B5 05                    1126 	.db #0x05	; 5
+      0000B6 00                    1127 	.db #0x00	; 0
+      0000B7 00                    1128 	.db #0x00	; 0
+      0000B8 00                    1129 	.db #0x00	; 0
+      0000B9 00                    1130 	.db #0x00	; 0
+      0000BA 00                    1131 	.db #0x00	; 0
+      0000BB 00                    1132 	.db #0x00	; 0
+      0000BC 00                    1133 	.db #0x00	; 0
+      0000BD 00                    1134 	.db #0x00	; 0
+      0000BE 00                    1135 	.db #0x00	; 0
+      0000BF 00                    1136 	.db #0x00	; 0
+      0000C0 00                    1137 	.db #0x00	; 0
+      0000C1 00                    1138 	.db #0x00	; 0
+      0000C2 00                    1139 	.db #0x00	; 0
+      0000C3 00                    1140 	.db #0x00	; 0
+      0000C4 00                    1141 	.db #0x00	; 0
+      0000C5 00                    1142 	.db #0x00	; 0
+      0000C6 05                    1143 	.db #0x05	; 5
+      0000C7 07                    1144 	.db #0x07	; 7
+      0000C8 07                    1145 	.db #0x07	; 7
+      0000C9 05                    1146 	.db #0x05	; 5
+      0000CA 00                    1147 	.db #0x00	; 0
+      0000CB 00                    1148 	.db #0x00	; 0
+      0000CC 00                    1149 	.db #0x00	; 0
+      0000CD 00                    1150 	.db #0x00	; 0
+      0000CE 00                    1151 	.db #0x00	; 0
+      0000CF 00                    1152 	.db #0x00	; 0
+      0000D0 00                    1153 	.db #0x00	; 0
+      0000D1 00                    1154 	.db #0x00	; 0
+      0000D2 00                    1155 	.db #0x00	; 0
+      0000D3 00                    1156 	.db #0x00	; 0
+      0000D4 00                    1157 	.db #0x00	; 0
+      0000D5 00                    1158 	.db #0x00	; 0
+      0000D6 00                    1159 	.db #0x00	; 0
+      0000D7 00                    1160 	.db #0x00	; 0
+      0000D8 00                    1161 	.db #0x00	; 0
+      0000D9 00                    1162 	.db #0x00	; 0
+      0000DA 05                    1163 	.db #0x05	; 5
+      0000DB 07                    1164 	.db #0x07	; 7
+      0000DC 07                    1165 	.db #0x07	; 7
+      0000DD 05                    1166 	.db #0x05	; 5
+      0000DE 00                    1167 	.db #0x00	; 0
+      0000DF 00                    1168 	.db #0x00	; 0
+      0000E0 10                    1169 	.db #0x10	; 16
+      0000E1 00                    1170 	.db #0x00	; 0
+      0000E2 00                    1171 	.db #0x00	; 0
+      0000E3 10                    1172 	.db #0x10	; 16
+      0000E4 00                    1173 	.db #0x00	; 0
+      0000E5 00                    1174 	.db #0x00	; 0
+      0000E6 00                    1175 	.db #0x00	; 0
+      0000E7 00                    1176 	.db #0x00	; 0
+      0000E8 10                    1177 	.db #0x10	; 16
+      0000E9 00                    1178 	.db #0x00	; 0
+      0000EA 00                    1179 	.db #0x00	; 0
+      0000EB 10                    1180 	.db #0x10	; 16
+      0000EC 00                    1181 	.db #0x00	; 0
+      0000ED 00                    1182 	.db #0x00	; 0
+      0000EE 05                    1183 	.db #0x05	; 5
+      0000EF 07                    1184 	.db #0x07	; 7
+      0000F0 07                    1185 	.db #0x07	; 7
+      0000F1 05                    1186 	.db #0x05	; 5
+      0000F2 00                    1187 	.db #0x00	; 0
+      0000F3 00                    1188 	.db #0x00	; 0
+      0000F4 0F                    1189 	.db #0x0f	; 15
+      0000F5 00                    1190 	.db #0x00	; 0
+      0000F6 00                    1191 	.db #0x00	; 0
+      0000F7 11                    1192 	.db #0x11	; 17
+      0000F8 00                    1193 	.db #0x00	; 0
+      0000F9 00                    1194 	.db #0x00	; 0
+      0000FA 00                    1195 	.db #0x00	; 0
+      0000FB 00                    1196 	.db #0x00	; 0
+      0000FC 11                    1197 	.db #0x11	; 17
+      0000FD 00                    1198 	.db #0x00	; 0
+      0000FE 00                    1199 	.db #0x00	; 0
+      0000FF 0F                    1200 	.db #0x0f	; 15
+      000100 00                    1201 	.db #0x00	; 0
+      000101 00                    1202 	.db #0x00	; 0
+      000102 05                    1203 	.db #0x05	; 5
+      000103 07                    1204 	.db #0x07	; 7
+      000104 07                    1205 	.db #0x07	; 7
+      000105 00                    1206 	.db #0x00	; 0
+      000106 02                    1207 	.db #0x02	; 2
+      000107 03                    1208 	.db #0x03	; 3
+      000108 03                    1209 	.db #0x03	; 3
+      000109 03                    1210 	.db #0x03	; 3
+      00010A 03                    1211 	.db #0x03	; 3
+      00010B 03                    1212 	.db #0x03	; 3
+      00010C 03                    1213 	.db #0x03	; 3
+      00010D 03                    1214 	.db #0x03	; 3
+      00010E 03                    1215 	.db #0x03	; 3
+      00010F 03                    1216 	.db #0x03	; 3
+      000110 03                    1217 	.db #0x03	; 3
+      000111 03                    1218 	.db #0x03	; 3
+      000112 03                    1219 	.db #0x03	; 3
+      000113 03                    1220 	.db #0x03	; 3
+      000114 03                    1221 	.db #0x03	; 3
+      000115 04                    1222 	.db #0x04	; 4
+      000116 00                    1223 	.db #0x00	; 0
+      000117 07                    1224 	.db #0x07	; 7
+      000118 07                    1225 	.db #0x07	; 7
+      000119 00                    1226 	.db #0x00	; 0
+      00011A 06                    1227 	.db #0x06	; 6
+      00011B 06                    1228 	.db #0x06	; 6
+      00011C 06                    1229 	.db #0x06	; 6
+      00011D 06                    1230 	.db #0x06	; 6
+      00011E 06                    1231 	.db #0x06	; 6
+      00011F 06                    1232 	.db #0x06	; 6
+      000120 06                    1233 	.db #0x06	; 6
+      000121 06                    1234 	.db #0x06	; 6
+      000122 06                    1235 	.db #0x06	; 6
+      000123 06                    1236 	.db #0x06	; 6
+      000124 06                    1237 	.db #0x06	; 6
+      000125 06                    1238 	.db #0x06	; 6
+      000126 06                    1239 	.db #0x06	; 6
+      000127 06                    1240 	.db #0x06	; 6
+      000128 06                    1241 	.db #0x06	; 6
+      000129 06                    1242 	.db #0x06	; 6
+      00012A 00                    1243 	.db #0x00	; 0
+      00012B 07                    1244 	.db #0x07	; 7
+      00012C 07                    1245 	.db #0x07	; 7
+      00012D 00                    1246 	.db #0x00	; 0
+      00012E 06                    1247 	.db #0x06	; 6
+      00012F 06                    1248 	.db #0x06	; 6
+      000130 06                    1249 	.db #0x06	; 6
+      000131 06                    1250 	.db #0x06	; 6
+      000132 06                    1251 	.db #0x06	; 6
+      000133 06                    1252 	.db #0x06	; 6
+      000134 06                    1253 	.db #0x06	; 6
+      000135 06                    1254 	.db #0x06	; 6
+      000136 06                    1255 	.db #0x06	; 6
+      000137 06                    1256 	.db #0x06	; 6
+      000138 06                    1257 	.db #0x06	; 6
+      000139 06                    1258 	.db #0x06	; 6
+      00013A 06                    1259 	.db #0x06	; 6
+      00013B 06                    1260 	.db #0x06	; 6
+      00013C 06                    1261 	.db #0x06	; 6
+      00013D 06                    1262 	.db #0x06	; 6
+      00013E 00                    1263 	.db #0x00	; 0
+      00013F 07                    1264 	.db #0x07	; 7
+      000140 07                    1265 	.db #0x07	; 7
+      000141 01                    1266 	.db #0x01	; 1
+      000142 06                    1267 	.db #0x06	; 6
+      000143 06                    1268 	.db #0x06	; 6
+      000144 06                    1269 	.db #0x06	; 6
+      000145 06                    1270 	.db #0x06	; 6
+      000146 06                    1271 	.db #0x06	; 6
+      000147 06                    1272 	.db #0x06	; 6
+      000148 06                    1273 	.db #0x06	; 6
+      000149 06                    1274 	.db #0x06	; 6
+      00014A 06                    1275 	.db #0x06	; 6
+      00014B 06                    1276 	.db #0x06	; 6
+      00014C 06                    1277 	.db #0x06	; 6
+      00014D 06                    1278 	.db #0x06	; 6
+      00014E 06                    1279 	.db #0x06	; 6
+      00014F 06                    1280 	.db #0x06	; 6
+      000150 06                    1281 	.db #0x06	; 6
+      000151 06                    1282 	.db #0x06	; 6
+      000152 01                    1283 	.db #0x01	; 1
+      000153 07                    1284 	.db #0x07	; 7
+      000154 05                    1285 	.db #0x05	; 5
+      000155 05                    1286 	.db #0x05	; 5
+      000156 05                    1287 	.db #0x05	; 5
+      000157 05                    1288 	.db #0x05	; 5
+      000158 05                    1289 	.db #0x05	; 5
+      000159 05                    1290 	.db #0x05	; 5
+      00015A 05                    1291 	.db #0x05	; 5
+      00015B 05                    1292 	.db #0x05	; 5
+      00015C 05                    1293 	.db #0x05	; 5
+      00015D 05                    1294 	.db #0x05	; 5
+      00015E 05                    1295 	.db #0x05	; 5
+      00015F 05                    1296 	.db #0x05	; 5
+      000160 05                    1297 	.db #0x05	; 5
+      000161 05                    1298 	.db #0x05	; 5
+      000162 05                    1299 	.db #0x05	; 5
+      000163 05                    1300 	.db #0x05	; 5
+      000164 05                    1301 	.db #0x05	; 5
+      000165 05                    1302 	.db #0x05	; 5
+      000166 05                    1303 	.db #0x05	; 5
+      000167 05                    1304 	.db #0x05	; 5
+      000168                       1305 __xinit__BackgroundTiles:
+      000168 00                    1306 	.db #0x00	; 0
+      000169 00                    1307 	.db #0x00	; 0
+      00016A 00                    1308 	.db #0x00	; 0
+      00016B 00                    1309 	.db #0x00	; 0
+      00016C 00                    1310 	.db #0x00	; 0
+      00016D 00                    1311 	.db #0x00	; 0
+      00016E 00                    1312 	.db #0x00	; 0
+      00016F 00                    1313 	.db #0x00	; 0
+      000170 00                    1314 	.db #0x00	; 0
+      000171 00                    1315 	.db #0x00	; 0
+      000172 00                    1316 	.db #0x00	; 0
+      000173 00                    1317 	.db #0x00	; 0
+      000174 00                    1318 	.db #0x00	; 0
+      000175 00                    1319 	.db #0x00	; 0
+      000176 00                    1320 	.db #0x00	; 0
+      000177 00                    1321 	.db #0x00	; 0
+      000178 00                    1322 	.db #0x00	; 0
+      000179 00                    1323 	.db #0x00	; 0
+      00017A 00                    1324 	.db #0x00	; 0
+      00017B 00                    1325 	.db #0x00	; 0
+      00017C 00                    1326 	.db #0x00	; 0
+      00017D 00                    1327 	.db #0x00	; 0
+      00017E 00                    1328 	.db #0x00	; 0
+      00017F 00                    1329 	.db #0x00	; 0
+      000180 00                    1330 	.db #0x00	; 0
+      000181 00                    1331 	.db #0x00	; 0
+      000182 FF                    1332 	.db #0xff	; 255
+      000183 FF                    1333 	.db #0xff	; 255
+      000184 00                    1334 	.db #0x00	; 0
+      000185 FF                    1335 	.db #0xff	; 255
+      000186 FF                    1336 	.db #0xff	; 255
+      000187 00                    1337 	.db #0x00	; 0
+      000188 7F                    1338 	.db #0x7f	; 127
+      000189 7F                    1339 	.db #0x7f	; 127
+      00018A AA                    1340 	.db #0xaa	; 170
+      00018B D5                    1341 	.db #0xd5	; 213
+      00018C AA                    1342 	.db #0xaa	; 170
+      00018D D5                    1343 	.db #0xd5	; 213
+      00018E AA                    1344 	.db #0xaa	; 170
+      00018F D5                    1345 	.db #0xd5	; 213
+      000190 AA                    1346 	.db #0xaa	; 170
+      000191 D5                    1347 	.db #0xd5	; 213
+      000192 AA                    1348 	.db #0xaa	; 170
+      000193 D5                    1349 	.db #0xd5	; 213
+      000194 AA                    1350 	.db #0xaa	; 170
+      000195 D5                    1351 	.db #0xd5	; 213
+      000196 AA                    1352 	.db #0xaa	; 170
+      000197 D5                    1353 	.db #0xd5	; 213
+      000198 FF                    1354 	.db #0xff	; 255
+      000199 FF                    1355 	.db #0xff	; 255
+      00019A AA                    1356 	.db #0xaa	; 170
+      00019B 55                    1357 	.db #0x55	; 85	'U'
+      00019C AA                    1358 	.db #0xaa	; 170
+      00019D 55                    1359 	.db #0x55	; 85	'U'
+      00019E AA                    1360 	.db #0xaa	; 170
+      00019F 55                    1361 	.db #0x55	; 85	'U'
+      0001A0 AA                    1362 	.db #0xaa	; 170
+      0001A1 55                    1363 	.db #0x55	; 85	'U'
+      0001A2 AA                    1364 	.db #0xaa	; 170
+      0001A3 55                    1365 	.db #0x55	; 85	'U'
+      0001A4 AA                    1366 	.db #0xaa	; 170
+      0001A5 55                    1367 	.db #0x55	; 85	'U'
+      0001A6 AA                    1368 	.db #0xaa	; 170
+      0001A7 55                    1369 	.db #0x55	; 85	'U'
+      0001A8 FE                    1370 	.db #0xfe	; 254
+      0001A9 FE                    1371 	.db #0xfe	; 254
+      0001AA AB                    1372 	.db #0xab	; 171
+      0001AB 55                    1373 	.db #0x55	; 85	'U'
+      0001AC AB                    1374 	.db #0xab	; 171
+      0001AD 55                    1375 	.db #0x55	; 85	'U'
+      0001AE AB                    1376 	.db #0xab	; 171
+      0001AF 55                    1377 	.db #0x55	; 85	'U'
+      0001B0 AB                    1378 	.db #0xab	; 171
+      0001B1 55                    1379 	.db #0x55	; 85	'U'
+      0001B2 AB                    1380 	.db #0xab	; 171
+      0001B3 55                    1381 	.db #0x55	; 85	'U'
+      0001B4 AB                    1382 	.db #0xab	; 171
+      0001B5 55                    1383 	.db #0x55	; 85	'U'
+      0001B6 AB                    1384 	.db #0xab	; 171
+      0001B7 55                    1385 	.db #0x55	; 85	'U'
+      0001B8 00                    1386 	.db #0x00	; 0
+      0001B9 FF                    1387 	.db #0xff	; 255
+      0001BA 00                    1388 	.db #0x00	; 0
+      0001BB FF                    1389 	.db #0xff	; 255
+      0001BC 00                    1390 	.db #0x00	; 0
+      0001BD FF                    1391 	.db #0xff	; 255
+      0001BE 00                    1392 	.db #0x00	; 0
+      0001BF FF                    1393 	.db #0xff	; 255
+      0001C0 00                    1394 	.db #0x00	; 0
+      0001C1 FF                    1395 	.db #0xff	; 255
+      0001C2 00                    1396 	.db #0x00	; 0
+      0001C3 FF                    1397 	.db #0xff	; 255
+      0001C4 00                    1398 	.db #0x00	; 0
+      0001C5 FF                    1399 	.db #0xff	; 255
+      0001C6 00                    1400 	.db #0x00	; 0
+      0001C7 FF                    1401 	.db #0xff	; 255
+      0001C8 FF                    1402 	.db #0xff	; 255
+      0001C9 00                    1403 	.db #0x00	; 0
+      0001CA FF                    1404 	.db #0xff	; 255
+      0001CB 00                    1405 	.db #0x00	; 0
+      0001CC FF                    1406 	.db #0xff	; 255
+      0001CD 00                    1407 	.db #0x00	; 0
+      0001CE FF                    1408 	.db #0xff	; 255
+      0001CF 00                    1409 	.db #0x00	; 0
+      0001D0 FF                    1410 	.db #0xff	; 255
+      0001D1 00                    1411 	.db #0x00	; 0
+      0001D2 FF                    1412 	.db #0xff	; 255
+      0001D3 00                    1413 	.db #0x00	; 0
+      0001D4 FF                    1414 	.db #0xff	; 255
+      0001D5 00                    1415 	.db #0x00	; 0
+      0001D6 FF                    1416 	.db #0xff	; 255
+      0001D7 00                    1417 	.db #0x00	; 0
+      0001D8 FF                    1418 	.db #0xff	; 255
+      0001D9 FF                    1419 	.db #0xff	; 255
+      0001DA FF                    1420 	.db #0xff	; 255
+      0001DB FF                    1421 	.db #0xff	; 255
+      0001DC FF                    1422 	.db #0xff	; 255
+      0001DD FF                    1423 	.db #0xff	; 255
+      0001DE FF                    1424 	.db #0xff	; 255
+      0001DF FF                    1425 	.db #0xff	; 255
+      0001E0 FF                    1426 	.db #0xff	; 255
+      0001E1 FF                    1427 	.db #0xff	; 255
+      0001E2 FF                    1428 	.db #0xff	; 255
+      0001E3 FF                    1429 	.db #0xff	; 255
+      0001E4 FF                    1430 	.db #0xff	; 255
+      0001E5 FF                    1431 	.db #0xff	; 255
+      0001E6 FF                    1432 	.db #0xff	; 255
+      0001E7 FF                    1433 	.db #0xff	; 255
+      0001E8 7E                    1434 	.db #0x7e	; 126
+      0001E9 42                    1435 	.db #0x42	; 66	'B'
+      0001EA 3C                    1436 	.db #0x3c	; 60
+      0001EB 24                    1437 	.db #0x24	; 36
+      0001EC 18                    1438 	.db #0x18	; 24
+      0001ED 18                    1439 	.db #0x18	; 24
+      0001EE 18                    1440 	.db #0x18	; 24
+      0001EF 18                    1441 	.db #0x18	; 24
+      0001F0 3C                    1442 	.db #0x3c	; 60
+      0001F1 3C                    1443 	.db #0x3c	; 60
+      0001F2 00                    1444 	.db #0x00	; 0
+      0001F3 FF                    1445 	.db #0xff	; 255
+      0001F4 FF                    1446 	.db #0xff	; 255
+      0001F5 00                    1447 	.db #0x00	; 0
+      0001F6 FF                    1448 	.db #0xff	; 255
+      0001F7 00                    1449 	.db #0x00	; 0
+      0001F8 42                    1450 	.db #0x42	; 66	'B'
+      0001F9 42                    1451 	.db #0x42	; 66	'B'
+      0001FA 42                    1452 	.db #0x42	; 66	'B'
+      0001FB 42                    1453 	.db #0x42	; 66	'B'
+      0001FC 42                    1454 	.db #0x42	; 66	'B'
+      0001FD 42                    1455 	.db #0x42	; 66	'B'
+      0001FE 42                    1456 	.db #0x42	; 66	'B'
+      0001FF 42                    1457 	.db #0x42	; 66	'B'
+      000200 3C                    1458 	.db #0x3c	; 60
+      000201 3C                    1459 	.db #0x3c	; 60
+      000202 00                    1460 	.db #0x00	; 0
+      000203 FF                    1461 	.db #0xff	; 255
+      000204 FF                    1462 	.db #0xff	; 255
+      000205 00                    1463 	.db #0x00	; 0
+      000206 FF                    1464 	.db #0xff	; 255
+      000207 00                    1465 	.db #0x00	; 0
+      000208 7E                    1466 	.db #0x7e	; 126
+      000209 42                    1467 	.db #0x42	; 66	'B'
+      00020A 7E                    1468 	.db #0x7e	; 126
+      00020B 42                    1469 	.db #0x42	; 66	'B'
+      00020C 7E                    1470 	.db #0x7e	; 126
+      00020D 42                    1471 	.db #0x42	; 66	'B'
+      00020E 7E                    1472 	.db #0x7e	; 126
+      00020F 42                    1473 	.db #0x42	; 66	'B'
+      000210 3C                    1474 	.db #0x3c	; 60
+      000211 3C                    1475 	.db #0x3c	; 60
+      000212 00                    1476 	.db #0x00	; 0
+      000213 FF                    1477 	.db #0xff	; 255
+      000214 FF                    1478 	.db #0xff	; 255
+      000215 00                    1479 	.db #0x00	; 0
+      000216 FF                    1480 	.db #0xff	; 255
+      000217 00                    1481 	.db #0x00	; 0
+      000218 00                    1482 	.db #0x00	; 0
+      000219 00                    1483 	.db #0x00	; 0
+      00021A 00                    1484 	.db #0x00	; 0
+      00021B 00                    1485 	.db #0x00	; 0
+      00021C 00                    1486 	.db #0x00	; 0
+      00021D 00                    1487 	.db #0x00	; 0
+      00021E 00                    1488 	.db #0x00	; 0
+      00021F 00                    1489 	.db #0x00	; 0
+      000220 00                    1490 	.db #0x00	; 0
+      000221 00                    1491 	.db #0x00	; 0
+      000222 00                    1492 	.db #0x00	; 0
+      000223 00                    1493 	.db #0x00	; 0
+      000224 00                    1494 	.db #0x00	; 0
+      000225 00                    1495 	.db #0x00	; 0
+      000226 42                    1496 	.db #0x42	; 66	'B'
+      000227 7E                    1497 	.db #0x7e	; 126
+      000228 00                    1498 	.db #0x00	; 0
+      000229 00                    1499 	.db #0x00	; 0
+      00022A 00                    1500 	.db #0x00	; 0
+      00022B 00                    1501 	.db #0x00	; 0
+      00022C 00                    1502 	.db #0x00	; 0
+      00022D 00                    1503 	.db #0x00	; 0
+      00022E 00                    1504 	.db #0x00	; 0
+      00022F 00                    1505 	.db #0x00	; 0
+      000230 00                    1506 	.db #0x00	; 0
+      000231 00                    1507 	.db #0x00	; 0
+      000232 00                    1508 	.db #0x00	; 0
+      000233 00                    1509 	.db #0x00	; 0
+      000234 00                    1510 	.db #0x00	; 0
+      000235 00                    1511 	.db #0x00	; 0
+      000236 42                    1512 	.db #0x42	; 66	'B'
+      000237 42                    1513 	.db #0x42	; 66	'B'
+      000238 7E                    1514 	.db #0x7e	; 126
+      000239 4A                    1515 	.db #0x4a	; 74	'J'
+      00023A 7E                    1516 	.db #0x7e	; 126
+      00023B 52                    1517 	.db #0x52	; 82	'R'
+      00023C 42                    1518 	.db #0x42	; 66	'B'
+      00023D 7E                    1519 	.db #0x7e	; 126
+      00023E 42                    1520 	.db #0x42	; 66	'B'
+      00023F 7E                    1521 	.db #0x7e	; 126
+      000240 7E                    1522 	.db #0x7e	; 126
+      000241 7E                    1523 	.db #0x7e	; 126
+      000242 00                    1524 	.db #0x00	; 0
+      000243 FF                    1525 	.db #0xff	; 255
+      000244 FF                    1526 	.db #0xff	; 255
+      000245 00                    1527 	.db #0x00	; 0
+      000246 FF                    1528 	.db #0xff	; 255
+      000247 00                    1529 	.db #0x00	; 0
+      000248 00                    1530 	.db #0x00	; 0
+      000249 00                    1531 	.db #0x00	; 0
+      00024A 00                    1532 	.db #0x00	; 0
+      00024B 00                    1533 	.db #0x00	; 0
+      00024C 00                    1534 	.db #0x00	; 0
+      00024D 00                    1535 	.db #0x00	; 0
+      00024E 18                    1536 	.db #0x18	; 24
+      00024F 00                    1537 	.db #0x00	; 0
+      000250 18                    1538 	.db #0x18	; 24
+      000251 18                    1539 	.db #0x18	; 24
+      000252 18                    1540 	.db #0x18	; 24
+      000253 18                    1541 	.db #0x18	; 24
+      000254 24                    1542 	.db #0x24	; 36
+      000255 3C                    1543 	.db #0x3c	; 60
+      000256 42                    1544 	.db #0x42	; 66	'B'
+      000257 7E                    1545 	.db #0x7e	; 126
+      000258 3C                    1546 	.db #0x3c	; 60
+      000259 3C                    1547 	.db #0x3c	; 60
+      00025A 3C                    1548 	.db #0x3c	; 60
+      00025B 3C                    1549 	.db #0x3c	; 60
+      00025C 3C                    1550 	.db #0x3c	; 60
+      00025D 00                    1551 	.db #0x00	; 0
+      00025E 42                    1552 	.db #0x42	; 66	'B'
+      00025F 3C                    1553 	.db #0x3c	; 60
+      000260 42                    1554 	.db #0x42	; 66	'B'
+      000261 3C                    1555 	.db #0x3c	; 60
+      000262 42                    1556 	.db #0x42	; 66	'B'
+      000263 3C                    1557 	.db #0x3c	; 60
+      000264 3C                    1558 	.db #0x3c	; 60
+      000265 00                    1559 	.db #0x00	; 0
+      000266 3C                    1560 	.db #0x3c	; 60
+      000267 3C                    1561 	.db #0x3c	; 60
+      000268 00                    1562 	.db #0x00	; 0
+      000269 00                    1563 	.db #0x00	; 0
+      00026A 00                    1564 	.db #0x00	; 0
+      00026B 00                    1565 	.db #0x00	; 0
+      00026C 00                    1566 	.db #0x00	; 0
+      00026D 00                    1567 	.db #0x00	; 0
+      00026E 00                    1568 	.db #0x00	; 0
+      00026F 00                    1569 	.db #0x00	; 0
+      000270 00                    1570 	.db #0x00	; 0
+      000271 00                    1571 	.db #0x00	; 0
+      000272 00                    1572 	.db #0x00	; 0
+      000273 00                    1573 	.db #0x00	; 0
+      000274 00                    1574 	.db #0x00	; 0
+      000275 00                    1575 	.db #0x00	; 0
+      000276 18                    1576 	.db #0x18	; 24
+      000277 18                    1577 	.db #0x18	; 24
+      000278 3C                    1578 	.db #0x3c	; 60
+      000279 3C                    1579 	.db #0x3c	; 60
+      00027A 3C                    1580 	.db #0x3c	; 60
+      00027B 00                    1581 	.db #0x00	; 0
+      00027C 66                    1582 	.db #0x66	; 102	'f'
+      00027D 18                    1583 	.db #0x18	; 24
+      00027E A5                    1584 	.db #0xa5	; 165
+      00027F 5A                    1585 	.db #0x5a	; 90	'Z'
+      000280 A5                    1586 	.db #0xa5	; 165
+      000281 5A                    1587 	.db #0x5a	; 90	'Z'
+      000282 66                    1588 	.db #0x66	; 102	'f'
+      000283 18                    1589 	.db #0x18	; 24
+      000284 3C                    1590 	.db #0x3c	; 60
+      000285 00                    1591 	.db #0x00	; 0
+      000286 3C                    1592 	.db #0x3c	; 60
+      000287 3C                    1593 	.db #0x3c	; 60
+      000288 00                    1594 	.db #0x00	; 0
+      000289 00                    1595 	.db #0x00	; 0
+      00028A 00                    1596 	.db #0x00	; 0
+      00028B 00                    1597 	.db #0x00	; 0
+      00028C 00                    1598 	.db #0x00	; 0
+      00028D 00                    1599 	.db #0x00	; 0
+      00028E 00                    1600 	.db #0x00	; 0
+      00028F 00                    1601 	.db #0x00	; 0
+      000290 00                    1602 	.db #0x00	; 0
+      000291 00                    1603 	.db #0x00	; 0
+      000292 00                    1604 	.db #0x00	; 0
+      000293 00                    1605 	.db #0x00	; 0
+      000294 00                    1606 	.db #0x00	; 0
+      000295 00                    1607 	.db #0x00	; 0
+      000296 00                    1608 	.db #0x00	; 0
+      000297 00                    1609 	.db #0x00	; 0
+      000298                       1610 __xinit__Bartender:
+      000298 07                    1611 	.db #0x07	; 7
+      000299 07                    1612 	.db #0x07	; 7
+      00029A 08                    1613 	.db #0x08	; 8
+      00029B 08                    1614 	.db #0x08	; 8
+      00029C 0A                    1615 	.db #0x0a	; 10
+      00029D 0A                    1616 	.db #0x0a	; 10
+      00029E 1A                    1617 	.db #0x1a	; 26
+      00029F 1A                    1618 	.db #0x1a	; 26
+      0002A0 10                    1619 	.db #0x10	; 16
+      0002A1 10                    1620 	.db #0x10	; 16
+      0002A2 09                    1621 	.db #0x09	; 9
+      0002A3 09                    1622 	.db #0x09	; 9
+      0002A4 0C                    1623 	.db #0x0c	; 12
+      0002A5 0C                    1624 	.db #0x0c	; 12
+      0002A6 1E                    1625 	.db #0x1e	; 30
+      0002A7 11                    1626 	.db #0x11	; 17
+      0002A8 E0                    1627 	.db #0xe0	; 224
+      0002A9 E0                    1628 	.db #0xe0	; 224
+      0002AA 10                    1629 	.db #0x10	; 16
+      0002AB 10                    1630 	.db #0x10	; 16
+      0002AC 50                    1631 	.db #0x50	; 80	'P'
+      0002AD 50                    1632 	.db #0x50	; 80	'P'
+      0002AE 58                    1633 	.db #0x58	; 88	'X'
+      0002AF 58                    1634 	.db #0x58	; 88	'X'
+      0002B0 08                    1635 	.db #0x08	; 8
+      0002B1 08                    1636 	.db #0x08	; 8
+      0002B2 90                    1637 	.db #0x90	; 144
+      0002B3 90                    1638 	.db #0x90	; 144
+      0002B4 30                    1639 	.db #0x30	; 48	'0'
+      0002B5 30                    1640 	.db #0x30	; 48	'0'
+      0002B6 78                    1641 	.db #0x78	; 120	'x'
+      0002B7 88                    1642 	.db #0x88	; 136
+      0002B8 3F                    1643 	.db #0x3f	; 63
+      0002B9 20                    1644 	.db #0x20	; 32
+      0002BA 3F                    1645 	.db #0x3f	; 63
+      0002BB 28                    1646 	.db #0x28	; 40
+      0002BC 3F                    1647 	.db #0x3f	; 63
+      0002BD 28                    1648 	.db #0x28	; 40
+      0002BE 2F                    1649 	.db #0x2f	; 47
+      0002BF 38                    1650 	.db #0x38	; 56	'8'
+      0002C0 29                    1651 	.db #0x29	; 41
+      0002C1 3F                    1652 	.db #0x3f	; 63
+      0002C2 12                    1653 	.db #0x12	; 18
+      0002C3 16                    1654 	.db #0x16	; 22
+      0002C4 0A                    1655 	.db #0x0a	; 10
+      0002C5 0E                    1656 	.db #0x0e	; 14
+      0002C6 12                    1657 	.db #0x12	; 18
+      0002C7 1E                    1658 	.db #0x1e	; 30
+      0002C8 FC                    1659 	.db #0xfc	; 252
+      0002C9 04                    1660 	.db #0x04	; 4
+      0002CA FC                    1661 	.db #0xfc	; 252
+      0002CB 14                    1662 	.db #0x14	; 20
+      0002CC FC                    1663 	.db #0xfc	; 252
+      0002CD 14                    1664 	.db #0x14	; 20
+      0002CE F4                    1665 	.db #0xf4	; 244
+      0002CF 1C                    1666 	.db #0x1c	; 28
+      0002D0 94                    1667 	.db #0x94	; 148
+      0002D1 FC                    1668 	.db #0xfc	; 252
+      0002D2 48                    1669 	.db #0x48	; 72	'H'
+      0002D3 68                    1670 	.db #0x68	; 104	'h'
+      0002D4 50                    1671 	.db #0x50	; 80	'P'
+      0002D5 70                    1672 	.db #0x70	; 112	'p'
+      0002D6 48                    1673 	.db #0x48	; 72	'H'
+      0002D7 78                    1674 	.db #0x78	; 120	'x'
+      0002D8                       1675 __xinit__moveY:
+      0002D8 01                    1676 	.db #0x01	; 1
+      0002D9                       1677 __xinit__moveX:
+      0002D9 00                    1678 	.db #0x00	; 0
+      0002DA                       1679 __xinit__yBounds:
+      0002DA 00                    1680 	.db #0x00	; 0
+      0002DB                       1681 __xinit__character:
+      0002DB 7E                    1682 	.db #0x7e	; 126
+      0002DC 7E                    1683 	.db #0x7e	; 126
+      0002DD 42                    1684 	.db #0x42	; 66	'B'
+      0002DE 5A                    1685 	.db #0x5a	; 90	'Z'
+      0002DF 42                    1686 	.db #0x42	; 66	'B'
+      0002E0 42                    1687 	.db #0x42	; 66	'B'
+      0002E1 7E                    1688 	.db #0x7e	; 126
+      0002E2 7E                    1689 	.db #0x7e	; 126
+      0002E3 18                    1690 	.db #0x18	; 24
+      0002E4 18                    1691 	.db #0x18	; 24
+      0002E5 3C                    1692 	.db #0x3c	; 60
+      0002E6 3C                    1693 	.db #0x3c	; 60
+      0002E7 18                    1694 	.db #0x18	; 24
+      0002E8 18                    1695 	.db #0x18	; 24
+      0002E9 24                    1696 	.db #0x24	; 36
+      0002EA 24                    1697 	.db #0x24	; 36
+                                   1698 	.area _CABS (ABS)

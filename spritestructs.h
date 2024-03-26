@@ -32,9 +32,12 @@ void LoadSpriteFrame(Sprite *sprite, uint8_t frame)
 {
     sprite->spritecurrentFrame = frame;
 
-    uint8_t spriteCount = sprite->spriteWidth * sprite->spriteHeight;
+    uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
 
-    for (uint8_t i = 0; i != spriteCount; i++, sprite->tileset[sprite-> tilesetStart + i + (frame * spriteCount)]);
+    for (uint8_t i = 0; i != spriteCount; i++)
+    {
+        set_sprite_tile(sprite->spriteID + i, sprite->tilesetStart + i);
+    }
 }
 
 void moveSprite (Sprite *sprite, uint8_t x, uint8_t y)
@@ -42,9 +45,9 @@ void moveSprite (Sprite *sprite, uint8_t x, uint8_t y)
     sprite->x = x;
     sprite->y = y;
 
-    for (uint8_t iy = 0; iy!= sprite->spriteWidth; iy++)
+    for (uint8_t iy = 0; iy!= sprite->spriteHeight; iy++)
     {
-        for (uint8_t ix = 0; ix!= sprite->spriteWidth; ix++)
+        for (uint8_t ix = 0; ix != sprite->spriteWidth; ix++)
         {
          uint8_t index = sprite->spriteID + ix + (iy * sprite->spriteWidth);
 
@@ -53,7 +56,63 @@ void moveSprite (Sprite *sprite, uint8_t x, uint8_t y)
     }
 }
 
-void setupSprites(Sprite *sprite, uint8_t spriteID, int8_t spriteHeight, uint8_t spriteWidth, uint8_t spriteFrames, uint8_t spritecurrentFrame, uint8_t tilesetStart, uint8_t x, uint8_t y,
+void scrollSprite(Sprite *sprite, uint8_t x, uint8_t y)
+{
+    uint8_t index = sprite->spriteID;
+    sprite->x = x;
+    sprite->y = y;
+
+    uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
+if (spriteCount <= 2)
+{
+    scroll_sprite(sprite->tilesetStart, x, y);
+}
+else
+{
+for (uint8_t i = 0; i != spriteCount; i++)
+    {
+        scroll_sprite(sprite->tilesetStart + i, x, y);
+    }
+}
+
+
+    
+
+
+}
+
+void playerMovement(Sprite *sprite)
+{
+
+   
+int8_t moveX = 0;
+uint8_t buttons = joypad();
+
+uint8_t index = sprite->spriteID;
+    
+
+    uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
+
+
+if (buttons & J_LEFT){
+   moveX = -1;
+}
+if (buttons & J_RIGHT){
+   moveX = 1;
+}
+
+for (uint8_t i = 0; i != spriteCount; i++)
+    {
+        scroll_sprite(sprite->tilesetStart + i, moveX, 0);
+    }
+}
+
+
+
+
+
+
+void setupSprites(Sprite *sprite, uint8_t spriteID, int8_t spriteHeight, uint8_t spriteWidth, uint8_t spriteFrames, uint8_t tilesetStart, uint8_t x, uint8_t y,
 uint8_t velocityX, uint8_t velocityY, const unsigned char *tileset){
 
     sprite->tileset = tileset;
@@ -62,7 +121,7 @@ uint8_t velocityX, uint8_t velocityY, const unsigned char *tileset){
     sprite->spriteHeight = spriteHeight;
     sprite->spriteWidth = spriteWidth;
     sprite->spriteFrames = spriteFrames;
-    sprite->spritecurrentFrame = spritecurrentFrame;
+    
     sprite->x = x;
     sprite->y = y;
     sprite->velocityX = velocityX;
@@ -76,3 +135,4 @@ uint8_t velocityX, uint8_t velocityY, const unsigned char *tileset){
   
 
 }
+
