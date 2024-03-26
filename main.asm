@@ -21,18 +21,12 @@
 	.globl _set_bkg_data
 	.globl _wait_vbl_done
 	.globl _joypad
-	.globl _character
-	.globl _yBounds
-	.globl _moveX
-	.globl _moveY
+	.globl _Wine
 	.globl _Bartender
 	.globl _BackgroundTiles
 	.globl _backgroundmap
 	.globl _bartender
 	.globl _wineglass
-	.globl _Wine
-	.globl _pint
-	.globl _BKGtile
 ;--------------------------------------------------------
 ; special function registers
 ;--------------------------------------------------------
@@ -54,13 +48,7 @@ _BackgroundTiles::
 	.ds 304
 _Bartender::
 	.ds 64
-_moveY::
-	.ds 1
-_moveX::
-	.ds 1
-_yBounds::
-	.ds 1
-_character::
+_Wine::
 	.ds 16
 ;--------------------------------------------------------
 ; absolute external ram data
@@ -82,7 +70,7 @@ _character::
 ; code
 ;--------------------------------------------------------
 	.area _CODE
-;spritestructs.h:31: void LoadSpriteFrame(Sprite *sprite, uint8_t frame)
+;spritestructs.h:35: void LoadSpriteFrame(Sprite *sprite, uint8_t frame)
 ;	---------------------------------
 ; Function LoadSpriteFrame
 ; ---------------------------------
@@ -91,11 +79,11 @@ _LoadSpriteFrame::
 	ld	c, e
 	ld	b, d
 	ld	e, a
-;spritestructs.h:33: sprite->spritecurrentFrame = frame;
+;spritestructs.h:37: sprite->spritecurrentFrame = frame;
 	ld	hl, #0x0004
 	add	hl, bc
 	ld	(hl), e
-;spritestructs.h:35: uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
+;spritestructs.h:39: uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
 	ld	e, c
 	ld	d, b
 	inc	de
@@ -112,7 +100,7 @@ _LoadSpriteFrame::
 	add	a, e
 	ldhl	sp,	#0
 	ld	(hl), a
-;spritestructs.h:37: for (uint8_t i = 0; i != spriteCount; i++)
+;spritestructs.h:41: for (uint8_t i = 0; i != spriteCount; i++)
 	ld	hl, #0x0005
 	add	hl, bc
 	push	hl
@@ -130,7 +118,7 @@ _LoadSpriteFrame::
 	ldhl	sp,	#3
 	sub	a, (hl)
 	jr	Z, 00106$
-;spritestructs.h:39: set_sprite_tile(sprite->spriteID + i, sprite->tilesetStart + i);
+;spritestructs.h:43: set_sprite_tile(sprite->spriteID + i, sprite->tilesetStart + i);
 	ldhl	sp,#1
 	ld	a, (hl+)
 	ld	e, a
@@ -156,15 +144,15 @@ _LoadSpriteFrame::
 	inc	hl
 	pop	de
 	ld	(hl), e
-;spritestructs.h:37: for (uint8_t i = 0; i != spriteCount; i++)
+;spritestructs.h:41: for (uint8_t i = 0; i != spriteCount; i++)
 	ldhl	sp,	#3
 	inc	(hl)
 	jr	00104$
 00106$:
-;spritestructs.h:41: }
+;spritestructs.h:45: }
 	add	sp, #4
 	ret
-;spritestructs.h:43: void moveSprite (Sprite *sprite, uint8_t x, uint8_t y)
+;spritestructs.h:47: void moveSprite (Sprite *sprite, uint8_t x, uint8_t y)
 ;	---------------------------------
 ; Function moveSprite
 ; ---------------------------------
@@ -174,7 +162,7 @@ _moveSprite::
 	ld	b, d
 	ldhl	sp,	#5
 	ld	(hl), a
-;spritestructs.h:45: sprite->x = x;
+;spritestructs.h:49: sprite->x = x;
 	ld	hl, #0x0006
 	add	hl, bc
 	ld	e, l
@@ -182,7 +170,7 @@ _moveSprite::
 	ldhl	sp,	#5
 	ld	a, (hl)
 	ld	(de), a
-;spritestructs.h:46: sprite->y = y;
+;spritestructs.h:50: sprite->y = y;
 	ld	hl, #0x0007
 	add	hl, bc
 	ld	e, l
@@ -190,7 +178,7 @@ _moveSprite::
 	ldhl	sp,	#10
 	ld	a, (hl)
 	ld	(de), a
-;spritestructs.h:48: for (uint8_t iy = 0; iy!= sprite->spriteHeight; iy++)
+;spritestructs.h:52: for (uint8_t iy = 0; iy!= sprite->spriteHeight; iy++)
 	ld	hl, #0x0002
 	add	hl, bc
 	inc	sp
@@ -220,7 +208,7 @@ _moveSprite::
 	ld	a, (hl+)
 	sub	a, (hl)
 	jr	Z, 00110$
-;spritestructs.h:50: for (uint8_t ix = 0; ix != sprite->spriteWidth; ix++)
+;spritestructs.h:54: for (uint8_t ix = 0; ix != sprite->spriteWidth; ix++)
 	ldhl	sp,	#7
 	ld	(hl), #0x00
 00105$:
@@ -234,7 +222,7 @@ _moveSprite::
 	ldhl	sp,	#4
 	sub	a, (hl)
 	jr	Z, 00109$
-;spritestructs.h:52: uint8_t index = sprite->spriteID + ix + (iy * sprite->spriteWidth);
+;spritestructs.h:56: uint8_t index = sprite->spriteID + ix + (iy * sprite->spriteWidth);
 	ld	a, (bc)
 	ldhl	sp,	#7
 	add	a, (hl)
@@ -252,7 +240,7 @@ _moveSprite::
 	pop	bc
 	add	a, d
 	ld	e, a
-;spritestructs.h:54: move_sprite(index, x + (ix * 8), y + (iy * 8));
+;spritestructs.h:58: move_sprite(index, x + (ix * 8), y + (iy * 8));
 	ldhl	sp,	#6
 	ld	a, (hl)
 	add	a, a
@@ -293,22 +281,22 @@ _moveSprite::
 	ldhl	sp,	#4
 	ld	a, (hl)
 	ld	(de), a
-;spritestructs.h:50: for (uint8_t ix = 0; ix != sprite->spriteWidth; ix++)
+;spritestructs.h:54: for (uint8_t ix = 0; ix != sprite->spriteWidth; ix++)
 	ldhl	sp,	#7
 	inc	(hl)
 	jr	00105$
 00109$:
-;spritestructs.h:48: for (uint8_t iy = 0; iy!= sprite->spriteHeight; iy++)
+;spritestructs.h:52: for (uint8_t iy = 0; iy!= sprite->spriteHeight; iy++)
 	ldhl	sp,	#6
 	inc	(hl)
 	jr	00108$
 00110$:
-;spritestructs.h:57: }
+;spritestructs.h:61: }
 	add	sp, #8
 	pop	hl
 	inc	sp
 	jp	(hl)
-;spritestructs.h:59: void scrollSprite(Sprite *sprite, uint8_t x, uint8_t y)
+;spritestructs.h:63: void scrollSprite(Sprite *sprite, uint8_t x, uint8_t y)
 ;	---------------------------------
 ; Function scrollSprite
 ; ---------------------------------
@@ -316,7 +304,7 @@ _scrollSprite::
 	add	sp, #-10
 	ldhl	sp,	#8
 	ld	(hl), a
-;spritestructs.h:62: sprite->x = x;
+;spritestructs.h:66: sprite->x = x;
 	ld	hl, #0x0006
 	add	hl, de
 	ld	c, l
@@ -324,7 +312,7 @@ _scrollSprite::
 	ldhl	sp,	#8
 	ld	a, (hl)
 	ld	(bc), a
-;spritestructs.h:63: sprite->y = y;
+;spritestructs.h:67: sprite->y = y;
 	ld	hl, #0x0007
 	add	hl, de
 	ld	c, l
@@ -332,7 +320,7 @@ _scrollSprite::
 	ldhl	sp,	#12
 	ld	a, (hl)
 	ld	(bc), a
-;spritestructs.h:65: uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
+;spritestructs.h:69: uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
 	ld	c, e
 	ld	b, d
 	inc	bc
@@ -349,7 +337,7 @@ _scrollSprite::
 	add	a, c
 	ldhl	sp,	#0
 	ld	(hl), a
-;spritestructs.h:68: scroll_sprite(sprite->tilesetStart, x, y);
+;spritestructs.h:72: scroll_sprite(sprite->tilesetStart, x, y);
 	ldhl	sp,	#12
 	ld	a, (hl)
 	ldhl	sp,	#9
@@ -364,12 +352,12 @@ _scrollSprite::
 	ld	a, h
 	ldhl	sp,	#7
 	ld	(hl), a
-;spritestructs.h:66: if (spriteCount <= 2)
+;spritestructs.h:70: if (spriteCount <= 2)
 	ld	a, #0x02
 	ldhl	sp,	#0
 	sub	a, (hl)
 	jr	C, 00114$
-;spritestructs.h:68: scroll_sprite(sprite->tilesetStart, x, y);
+;spritestructs.h:72: scroll_sprite(sprite->tilesetStart, x, y);
 	ldhl	sp,#6
 	ld	a, (hl+)
 	ld	e, a
@@ -455,9 +443,9 @@ _scrollSprite::
 	ld	h, (hl)
 	ld	l, a
 	ld	(hl), c
-;spritestructs.h:68: scroll_sprite(sprite->tilesetStart, x, y);
+;spritestructs.h:72: scroll_sprite(sprite->tilesetStart, x, y);
 	jp	00110$
-;spritestructs.h:72: for (uint8_t i = 0; i != spriteCount; i++)
+;spritestructs.h:76: for (uint8_t i = 0; i != spriteCount; i++)
 00114$:
 	ldhl	sp,	#9
 	ld	a, (hl)
@@ -479,7 +467,7 @@ _scrollSprite::
 	ldhl	sp,	#0
 	sub	a, (hl)
 	jr	Z, 00110$
-;spritestructs.h:74: scroll_sprite(sprite->tilesetStart + i, x, y);
+;spritestructs.h:78: scroll_sprite(sprite->tilesetStart + i, x, y);
 	ldhl	sp,#2
 	ld	a, (hl+)
 	ld	e, a
@@ -567,30 +555,30 @@ _scrollSprite::
 	ld	l, (hl)
 	ld	h, a
 	ld	(hl), c
-;spritestructs.h:72: for (uint8_t i = 0; i != spriteCount; i++)
+;spritestructs.h:76: for (uint8_t i = 0; i != spriteCount; i++)
 	ldhl	sp,	#9
 	inc	(hl)
 	jr	00108$
 00110$:
-;spritestructs.h:82: }
+;spritestructs.h:84: }
 	add	sp, #10
 	pop	hl
 	inc	sp
 	jp	(hl)
-;spritestructs.h:84: void playerMovement(Sprite *sprite)
+;spritestructs.h:86: void playerMovement(Sprite *sprite)
 ;	---------------------------------
 ; Function playerMovement
 ; ---------------------------------
 _playerMovement::
 	add	sp, #-3
-;spritestructs.h:88: int8_t moveX = 0;
+;spritestructs.h:90: int8_t moveX = 0;
 	ld	c, #0x00
-;spritestructs.h:89: uint8_t buttons = joypad();
+;spritestructs.h:91: uint8_t buttons = joypad();
 	push	de
 	call	_joypad
 	ld	b, a
 	pop	de
-;spritestructs.h:94: uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
+;spritestructs.h:96: uint8_t spriteCount = sprite->spriteWidth + sprite->spriteHeight;
 	ld	l, e
 ;	spillPairReg hl
 ;	spillPairReg hl
@@ -612,18 +600,18 @@ _playerMovement::
 	add	a, l
 	ldhl	sp,	#0
 	ld	(hl), a
-;spritestructs.h:97: if (buttons & J_LEFT){
+;spritestructs.h:99: if (buttons & J_LEFT){
 	bit	1, b
 	jr	Z, 00102$
-;spritestructs.h:98: moveX = -1;
+;spritestructs.h:100: moveX = -1;
 	ld	c, #0xff
 00102$:
-;spritestructs.h:100: if (buttons & J_RIGHT){
+;spritestructs.h:102: if (buttons & J_RIGHT){
 	bit	0, b
 	jr	Z, 00115$
-;spritestructs.h:101: moveX = 1;
+;spritestructs.h:103: moveX = 1;
 	ld	c, #0x01
-;spritestructs.h:104: for (uint8_t i = 0; i != spriteCount; i++)
+;spritestructs.h:106: for (uint8_t i = 0; i != spriteCount; i++)
 00115$:
 	ld	hl, #0x0005
 	add	hl, de
@@ -641,7 +629,7 @@ _playerMovement::
 	ld	a, (hl)
 	sub	a, b
 	jr	Z, 00110$
-;spritestructs.h:106: scroll_sprite(sprite->tilesetStart + i, moveX, 0);
+;spritestructs.h:108: scroll_sprite(sprite->tilesetStart + i, moveX, 0);
 	ldhl	sp,#1
 	ld	a, (hl+)
 	ld	e, a
@@ -665,14 +653,14 @@ _playerMovement::
 	ld	a, (hl)
 	add	a, c
 	ld	(hl), a
-;spritestructs.h:104: for (uint8_t i = 0; i != spriteCount; i++)
+;spritestructs.h:106: for (uint8_t i = 0; i != spriteCount; i++)
 	inc	b
 	jr	00108$
 00110$:
-;spritestructs.h:108: }
+;spritestructs.h:110: }
 	add	sp, #3
 	ret
-;spritestructs.h:115: void setupSprites(Sprite *sprite, uint8_t spriteID, int8_t spriteHeight, uint8_t spriteWidth, uint8_t spriteFrames, uint8_t tilesetStart, uint8_t x, uint8_t y,
+;spritestructs.h:117: void setupSprites(Sprite *sprite, uint8_t spriteID, int8_t spriteHeight, uint8_t spriteWidth, uint8_t spriteFrames, uint8_t tilesetStart, uint8_t x, uint8_t y,
 ;	---------------------------------
 ; Function setupSprites
 ; ---------------------------------
@@ -680,7 +668,7 @@ _setupSprites::
 	dec	sp
 	ldhl	sp,	#0
 	ld	(hl), a
-;spritestructs.h:118: sprite->tileset = tileset;
+;spritestructs.h:120: sprite->tileset = tileset;
 	ld	hl, #0x000a
 	add	hl, de
 	ld	c, l
@@ -691,7 +679,7 @@ _setupSprites::
 	inc	bc
 	ld	a, (hl)
 	ld	(bc), a
-;spritestructs.h:119: sprite->tilesetStart = tilesetStart;
+;spritestructs.h:121: sprite->tilesetStart = tilesetStart;
 	ld	hl, #0x0005
 	add	hl, de
 	ld	c, l
@@ -699,23 +687,23 @@ _setupSprites::
 	ldhl	sp,	#6
 	ld	a, (hl)
 	ld	(bc), a
-;spritestructs.h:120: sprite->spriteID = spriteID;
+;spritestructs.h:122: sprite->spriteID = spriteID;
 	ldhl	sp,	#0
 	ld	a, (hl)
 	ld	(de), a
-;spritestructs.h:121: sprite->spriteHeight = spriteHeight;
+;spritestructs.h:123: sprite->spriteHeight = spriteHeight;
 	ld	c, e
 	ld	b, d
 	inc	bc
 	ldhl	sp,	#3
-;spritestructs.h:122: sprite->spriteWidth = spriteWidth;
+;spritestructs.h:124: sprite->spriteWidth = spriteWidth;
 	ld	a, (hl+)
 	ld	(bc), a
 	ld	c, e
 	ld	b, d
 	inc	bc
 	inc	bc
-;spritestructs.h:123: sprite->spriteFrames = spriteFrames;
+;spritestructs.h:125: sprite->spriteFrames = spriteFrames;
 	ld	a, (hl+)
 	ld	(bc), a
 	ld	c, e
@@ -725,7 +713,7 @@ _setupSprites::
 	inc	bc
 	ld	a, (hl)
 	ld	(bc), a
-;spritestructs.h:125: sprite->x = x;
+;spritestructs.h:127: sprite->x = x;
 	ld	hl, #0x0006
 	add	hl, de
 	ld	c, l
@@ -733,7 +721,7 @@ _setupSprites::
 	ldhl	sp,	#7
 	ld	a, (hl)
 	ld	(bc), a
-;spritestructs.h:126: sprite->y = y;
+;spritestructs.h:128: sprite->y = y;
 	ld	hl, #0x0007
 	add	hl, de
 	ld	c, l
@@ -741,7 +729,7 @@ _setupSprites::
 	ldhl	sp,	#8
 	ld	a, (hl)
 	ld	(bc), a
-;spritestructs.h:127: sprite->velocityX = velocityX;
+;spritestructs.h:129: sprite->velocityX = velocityX;
 	ld	hl, #0x0008
 	add	hl, de
 	ld	c, l
@@ -749,7 +737,7 @@ _setupSprites::
 	ldhl	sp,	#9
 	ld	a, (hl)
 	ld	(bc), a
-;spritestructs.h:128: sprite->velocityY = velocityY;
+;spritestructs.h:130: sprite->velocityY = velocityY;
 	ld	hl, #0x0009
 	add	hl, de
 	ld	c, l
@@ -757,27 +745,27 @@ _setupSprites::
 	ldhl	sp,	#10
 	ld	a, (hl)
 	ld	(bc), a
-;spritestructs.h:130: LoadSpriteFrame(sprite, 0);
+;spritestructs.h:132: LoadSpriteFrame(sprite, 0);
 	xor	a, a
 	call	_LoadSpriteFrame
-;spritestructs.h:137: }
+;spritestructs.h:139: }
 	inc	sp
 	pop	hl
 	add	sp, #10
 	jp	(hl)
-;main.c:46: void setBackground(void){
+;main.c:19: void setBackground(void){
 ;	---------------------------------
 ; Function setBackground
 ; ---------------------------------
 _setBackground::
-;main.c:48: set_bkg_data(0, 18, BackgroundTiles);
+;main.c:21: set_bkg_data(0, 18, BackgroundTiles);
 	ld	de, #_BackgroundTiles
 	push	de
 	ld	hl, #0x1200
 	push	hl
 	call	_set_bkg_data
 	add	sp, #4
-;main.c:49: set_bkg_tiles(0, 0, 20, 18, backgroundmap);
+;main.c:22: set_bkg_tiles(0, 0, 20, 18, backgroundmap);
 	ld	de, #_backgroundmap
 	push	de
 	ld	hl, #0x1214
@@ -787,65 +775,14 @@ _setBackground::
 	push	af
 	call	_set_bkg_tiles
 	add	sp, #6
-;main.c:52: }
+;main.c:25: }
 	ret
-_BKGtile:
-	.db #0xff	; 255
-	.db #0x00	; 0
-	.db #0x81	; 129
-	.db #0x7e	; 126
-	.db #0xbd	; 189
-	.db #0x42	; 66	'B'
-	.db #0xa5	; 165
-	.db #0x5a	; 90	'Z'
-	.db #0xa5	; 165
-	.db #0x5a	; 90	'Z'
-	.db #0xbd	; 189
-	.db #0x42	; 66	'B'
-	.db #0x81	; 129
-	.db #0x7e	; 126
-	.db #0xff	; 255
-	.db #0x00	; 0
-_pint:
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x3c	; 60
-	.db #0x3c	; 60
-_Wine:
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x7e	; 126
-	.db #0x3c	; 60
-	.db #0x3c	; 60
-	.db #0x18	; 24
-	.db #0x18	; 24
-	.db #0x18	; 24
-	.db #0x18	; 24
-	.db #0x18	; 24
-	.db #0x18	; 24
-	.db #0x3c	; 60
-	.db #0x3c	; 60
-;main.c:54: void loadSprites(void)
+;main.c:27: void loadSprites(void)
 ;	---------------------------------
 ; Function loadSprites
 ; ---------------------------------
 _loadSprites::
-;main.c:56: set_sprite_data(0, 1, Wine);
+;main.c:29: set_sprite_data(0, 1, Wine);
 	ld	de, #_Wine
 	push	de
 	xor	a, a
@@ -853,33 +790,33 @@ _loadSprites::
 	push	af
 	call	_set_sprite_data
 	add	sp, #4
-;main.c:57: set_sprite_data(1, 4, Bartender);
+;main.c:30: set_sprite_data(1, 4, Bartender);
 	ld	de, #_Bartender
 	push	de
 	ld	hl, #0x401
 	push	hl
 	call	_set_sprite_data
 	add	sp, #4
-;main.c:60: }
+;main.c:33: }
 	ret
-;main.c:80: void main(void)
+;main.c:38: void main(void)
 ;	---------------------------------
 ; Function main
 ; ---------------------------------
 _main::
-;main.c:85: SHOW_BKG;
+;main.c:43: SHOW_BKG;
 	ldh	a, (_LCDC_REG + 0)
 	or	a, #0x01
 	ldh	(_LCDC_REG + 0), a
-;main.c:86: SHOW_SPRITES;
+;main.c:44: SHOW_SPRITES;
 	ldh	a, (_LCDC_REG + 0)
 	or	a, #0x02
 	ldh	(_LCDC_REG + 0), a
-;main.c:88: setBackground();
+;main.c:46: setBackground();
 	call	_setBackground
-;main.c:89: loadSprites();
+;main.c:47: loadSprites();
 	call	_loadSprites
-;main.c:91: setupSprites(&bartender, 1, 2, 2, 4, 1, 30, 30, 0, 0, Bartender);
+;main.c:49: setupSprites(&bartender, 1, 2, 2, 4, 1, 30, 30, 0, 0, Bartender);
 	ld	de, #_Bartender
 	push	de
 	xor	a, a
@@ -894,7 +831,7 @@ _main::
 	ld	a, #0x01
 	ld	de, #_bartender
 	call	_setupSprites
-;main.c:92: setupSprites(&wineglass, 0, 1, 1, 1, 0, 30, 30, 0, 0, Wine);
+;main.c:50: setupSprites(&wineglass, 0, 1, 1, 1, 0, 30, 30, 0, 0, Wine);
 	ld	de, #_Wine
 	push	de
 	xor	a, a
@@ -909,35 +846,35 @@ _main::
 	xor	a, a
 	ld	de, #_wineglass
 	call	_setupSprites
-;main.c:95: moveSprite(&wineglass, 20, 30);
+;main.c:53: moveSprite(&wineglass, 20, 30);
 	ld	a, #0x1e
 	push	af
 	inc	sp
 	ld	a, #0x14
 	ld	de, #_wineglass
 	call	_moveSprite
-;main.c:96: moveSprite(&bartender, 80, 140);
+;main.c:54: moveSprite(&bartender, 80, 140);
 	ld	a, #0x8c
 	push	af
 	inc	sp
 	ld	a, #0x50
 	ld	de, #_bartender
 	call	_moveSprite
-;main.c:99: while (1) {
+;main.c:57: while (1) {
 00102$:
-;main.c:101: playerMovement(&bartender);
+;main.c:59: playerMovement(&bartender);
 	ld	de, #_bartender
 	call	_playerMovement
-;main.c:103: scrollSprite(&wineglass, moveX, moveY);
-	ld	a, (#_moveY)
+;main.c:61: scrollSprite(&wineglass, 0, 1);
+	ld	a, #0x01
 	push	af
 	inc	sp
-	ld	a, (#_moveX)
+	xor	a, a
 	ld	de, #_wineglass
 	call	_scrollSprite
-;main.c:104: wait_vbl_done();
+;main.c:62: wait_vbl_done();
 	call	_wait_vbl_done
-;main.c:109: }
+;main.c:67: }
 	jr	00102$
 	.area _CODE
 	.area _INITIALIZER
@@ -1672,27 +1609,21 @@ __xinit__Bartender:
 	.db #0x70	; 112	'p'
 	.db #0x48	; 72	'H'
 	.db #0x78	; 120	'x'
-__xinit__moveY:
-	.db #0x01	; 1
-__xinit__moveX:
-	.db #0x00	; 0
-__xinit__yBounds:
-	.db #0x00	; 0
-__xinit__character:
-	.db #0x7e	; 126
-	.db #0x7e	; 126
-	.db #0x42	; 66	'B'
-	.db #0x5a	; 90	'Z'
-	.db #0x42	; 66	'B'
+__xinit__Wine:
 	.db #0x42	; 66	'B'
 	.db #0x7e	; 126
+	.db #0x42	; 66	'B'
 	.db #0x7e	; 126
-	.db #0x18	; 24
-	.db #0x18	; 24
+	.db #0x42	; 66	'B'
+	.db #0x7e	; 126
 	.db #0x3c	; 60
 	.db #0x3c	; 60
 	.db #0x18	; 24
 	.db #0x18	; 24
-	.db #0x24	; 36
-	.db #0x24	; 36
+	.db #0x18	; 24
+	.db #0x18	; 24
+	.db #0x18	; 24
+	.db #0x18	; 24
+	.db #0x3c	; 60
+	.db #0x3c	; 60
 	.area _CABS (ABS)

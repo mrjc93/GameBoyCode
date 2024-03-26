@@ -1,7 +1,8 @@
 #include <gb/gb.h>
 #include <stdio.h>
+#include "spritestructs.h"
 
-typedef struct Sprite{
+typedef struct Character{
 
 uint8_t spriteID;
 
@@ -28,9 +29,7 @@ const unsigned char *tileset;
 
 
 
-}Sprite;
-
-
+}Character;
 
 void LoadSpriteFrame(Sprite *sprite, uint8_t frame)
 {
@@ -79,6 +78,17 @@ for (uint8_t i = 0; i != spriteCount; i++)
     }
 }
 
+UBYTE checkCollisions(Sprite sprite, Sprite sprite)
+{
+
+
+if{
+
+}
+
+
+}
+    
 
 
 }
@@ -114,7 +124,7 @@ for (uint8_t i = 0; i != spriteCount; i++)
 
 
 
-void setupSprites(Sprite *sprite, uint8_t spriteID, int8_t spriteHeight, uint8_t spriteWidth, uint8_t spriteFrames, uint8_t tilesetStart, uint8_t x, uint8_t y,
+void setupCharacter(Character *character, uint8_t characterID, int8_t spriteHeight, uint8_t spriteWidth, uint8_t spriteFrames, uint8_t tilesetStart, uint8_t x, uint8_t y,
 uint8_t velocityX, uint8_t velocityY, const unsigned char *tileset){
 
     sprite->tileset = tileset;
