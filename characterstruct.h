@@ -1,6 +1,8 @@
+#ifndef CHARACTERSTRUCTS_H
+#define CHARACTERSTRUCTS_H
+
 #include <gb/gb.h>
 #include <stdio.h>
-
 
 typedef struct Character{
 
@@ -60,32 +62,6 @@ void moveCharacter (Character *character, uint8_t x, uint8_t y)
 }
 
 
-void playerMovement(Character *character)
-{
-
-   
-int8_t moveX = 0;
-uint8_t buttons = joypad();
-
-uint8_t index = character->characterID;
-    
-
-    uint8_t characterCount = character->characterWidth + character->characterHeight;
-
-
-if (buttons & J_LEFT){
-   moveX = -1;
-}
-if (buttons & J_RIGHT){
-   moveX = 1;
-}
-
-for (uint8_t i = 0; i != characterCount; i++)
-    {
-        scroll_sprite(character->charactertilesetStart + i, moveX, 0);
-    }
-}
-
 
 
 
@@ -102,7 +78,7 @@ uint8_t charactervelocityX, uint8_t charactervelocityY, const unsigned char *cha
     character->characterFrames = characterFrames;
     
     character->characterX = characterX;
-    character->characterX = characterY;
+    character->characterY = characterY;
     character->charactervelocityX = charactervelocityX;
     character->charactervelocityY = charactervelocityY;
 
@@ -115,3 +91,4 @@ uint8_t charactervelocityX, uint8_t charactervelocityY, const unsigned char *cha
 
 }
 
+#endif

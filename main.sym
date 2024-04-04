@@ -10,30 +10,39 @@ Symbol Table
   2 _BackgroundTiles                                               000168 GR
   2 _Bartender                                                     000298 GR
     _LCDC_REG                                                      ****** GX
-  0 _LoadCharacterFrame                                            00028E GR
-  0 _LoadSpriteFrame                                               000000 GR
+  0 _LoadCharacterFrame                                            0001D5 GR
+  0 _LoadSpriteFrame                                               000013 GR
   2 _Wine                                                          0002D8 GR
     __muluchar                                                     ****** GX
   7 __xinit__BackgroundTiles                                       000168 R
   7 __xinit__Bartender                                             000298 R
   7 __xinit__Wine                                                  0002D8 R
   7 __xinit__backgroundmap                                         000000 R
+  7 __xinit__characterXpos                                         0002EA R
+  7 __xinit__characterYpos                                         0002E9 R
+  7 __xinit__spriteXpos                                            0002EB R
+  7 __xinit__spriteYpos                                            0002E8 R
   2 _backgroundmap                                                 000000 GR
-  1 _bartender                                                     00000C GR
+  1 _bartender                                                     00000F GR
+  2 _characterXpos                                                 0002EA GR
+  2 _characterYpos                                                 0002E9 GR
+  0 _getSpriteBox                                                  000000 GR
     _joypad                                                        ****** GX
-  0 _loadSprites                                                   00044D GR
-  0 _main                                                          000467 GR
-  0 _moveCharacter                                                 0002DF GR
-  0 _moveSprite                                                    000051 GR
-  0 _playerMovement                                                00037F GR
-  0 _scrollSprite                                                  0000F1 GR
-  0 _setBackground                                                 00042F GR
+  0 _loadSprites                                                   000348 GR
+  0 _main                                                          0003C0 GR
+  0 _moveCharacter                                                 000226 GR
+  0 _moveSprite                                                    000069 GR
+  0 _playerMovement                                                000362 GR
+  0 _scrollSprite                                                  000109 GR
+  0 _setBackground                                                 00032A GR
     _set_bkg_data                                                  ****** GX
     _set_bkg_tiles                                                 ****** GX
     _set_sprite_data                                               ****** GX
-  0 _setupCharacter                                                0003D3 GR
-  0 _setupSprites                                                  00022A GR
+  0 _setupCharacter                                                0002C6 GR
+  0 _setupSprites                                                  00014B GR
     _shadow_OAM                                                    ****** GX
+  2 _spriteXpos                                                    0002EB GR
+  2 _spriteYpos                                                    0002E8 GR
     _wait_vbl_done                                                 ****** GX
   1 _wineglass                                                     000000 GR
 
@@ -42,13 +51,13 @@ Hexadecimal [24-Bits]
 
 Area Table
 
-   0 _CODE                                      size    4DC   flags    0
-   1 _DATA                                      size     18   flags    0
-   2 _INITIALIZED                               size    2E8   flags    0
+   0 _CODE                                      size    56B   flags    0
+   1 _DATA                                      size     1B   flags    0
+   2 _INITIALIZED                               size    2EC   flags    0
    3 _DABS                                      size      0   flags    8
    4 _HOME                                      size      0   flags    0
    5 _GSINIT                                    size      0   flags    0
    6 _GSFINAL                                   size      0   flags    0
-   7 _INITIALIZER                               size    2E8   flags    0
+   7 _INITIALIZER                               size    2EC   flags    0
    8 _CABS                                      size      0   flags    8
 
