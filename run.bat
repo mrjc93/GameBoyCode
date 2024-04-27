@@ -1,0 +1,1 @@
+start .\dependencies\bgbw\bgb64.exe -rom .\build\CrownSimulator.gb

@@ -1,0 +1,17 @@
+# Ignore compiled binaries
+# because builds can be different depending on the operating system, they typically aren't committed to the repository
+*.exe
+*.asm
+*.lst
+*.sym
+*.dll
+*.so
+*.o
+*.dylib
+
+# Ignore build artifacts
+build/
+
+# Ignore dependencies
+dependencies/bgbw/
+dependencies/gbdk/

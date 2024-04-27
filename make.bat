@@ -1,10 +1,9 @@
 REM delete previous files
-DEL *.gb
+DEL .\build\*.gb
 
 REM compile .c files into .o files
-C:\gbdk\bin\lcc -c -o main.o main.c
+start .\dependencies\gbdk\bin\lcc -c -o .\src\main.o .\src\main.c
 
 
 REM Compile a .gb file from the compiled .o files
-C:\GBDK\bin\lcc  -o CrownSimulator.gb main.o
-
+start .\dependencies\gbdk\bin\lcc  -o .\build\CrownSimulator.gb .\src\main.o
