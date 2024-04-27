@@ -36,3 +36,11 @@ the final folder structure will be something like:
 ├── run.bat
 └── ...(whatever root level config)
 ```
+
+## Build and run in one command
+
+Most likely, you'll make a change and want to see that change in the next run. In this case, you can pass an argument to the run batch.
+
+```shell
+run.bat rebuild
+```
