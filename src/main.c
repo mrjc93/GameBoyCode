@@ -1,11 +1,13 @@
 #include <gb/gb.h>
 #include <stdio.h>
+#include <rand.h>
 #include "backgroundmap.c"
 #include "backgroundtiles.c"
 #include "spritestructs.h"
 #include "characterstruct.h"
 #include "Bartender.c"
 #include "wine.c"
+#include "utils.c"
 
 #define NUM_CHARACTERS 1
 #define NUM_SPRITES 1
@@ -65,6 +67,7 @@ void main(void)
 
     setBackground();
     loadSprites();
+    initialize_random();
 
     setupCharacter(&bartender, 1, 2, 2, 4, 1, 1, 1, 0, 0, Bartender);
     setupSprites(&wineglass, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, Wine);
@@ -74,15 +77,14 @@ void main(void)
 
     while (1)
     {
-
         playerMovement(&bartender);
-
         scrollSprite(&wineglass, 0, 1);
         spriteYpos++;
         if (spriteYpos == characterYpos && spriteXpos == characterXpos || spriteYpos == characterYpos && spriteXpos == characterXpos + 1 || spriteYpos == characterYpos && spriteXpos == characterXpos + 10 || spriteYpos == characterYpos && spriteXpos == characterXpos + 9 || spriteYpos == characterYpos && spriteXpos == characterXpos + 8 || spriteYpos == characterYpos && spriteXpos == characterXpos + 7 || spriteYpos == characterYpos && spriteXpos == characterXpos + 5 || spriteYpos == characterYpos && spriteXpos == characterXpos + 4 || spriteYpos == characterYpos && spriteXpos == characterXpos + 6 || spriteYpos == characterYpos && spriteXpos == characterXpos + 2 || spriteYpos == characterYpos && spriteXpos == characterXpos + 3 || spriteYpos == characterYpos && spriteXpos == characterXpos - 1 || spriteYpos == characterYpos && spriteXpos == characterXpos - 2 || spriteYpos == characterYpos && spriteXpos == characterXpos - 3)
         {
             spriteYpos = 0;
-            moveSprite(&wineglass, 20, 0);
+            spriteXpos = random_number(20, 160);
+            moveSprite(&wineglass, spriteXpos, spriteYpos);
         }
 
         wait_vbl_done();
