@@ -12,42 +12,55 @@
 
 unsigned char tilemap[TILEMAP_HEIGHT][TILEMAP_WIDTH];
 
-void initializeTilemap(void) {
-    for (int y = 0; y < TILEMAP_HEIGHT; y++) {
-        for (int x = 0; x < TILEMAP_WIDTH; x++) {
-            tilemap[y][x] = 0; 
+void initializeTilemap(void)
+{
+    for (int y = 0; y < TILEMAP_HEIGHT; y++)
+    {
+        for (int x = 0; x < TILEMAP_WIDTH; x++)
+        {
+            tilemap[y][x] = 0;
         }
     }
 }
 
-void UpdateTileMapWithSprites(Character *characters, Sprite *sprites, uint8_t numCharacters, uint8_t numSprites) {
+void UpdateTileMapWithSprites(Character *characters, Sprite *sprites, uint8_t numCharacters, uint8_t numSprites)
+{
     initializeTilemap();
 
     // Update tilemap with characters
-    for (uint8_t i = 0; i < numCharacters; i++) {
+    for (uint8_t i = 0; i < numCharacters; i++)
+    {
         Character *character = &characters[i];
         uint8_t charactertileX = character->characterX / TILE_WIDTH;
         uint8_t charactertileY = character->characterY / TILE_HEIGHT;
 
-        for (uint8_t y = 0; y < character->characterHeight / TILE_HEIGHT; y++) {
-            for (uint8_t x = 0; x < character->characterWidth / TILE_WIDTH; x++) {
+        for (uint8_t y = 0; y < character->characterHeight / TILE_HEIGHT; y++)
+        {
+            for (uint8_t x = 0; x < character->characterWidth / TILE_WIDTH; x++)
+            {
                 tilemap[charactertileY + y][charactertileX + x] = CHARACTER_TILE_INDEX;
             }
         }
     }
 
     // Update tilemap with sprites
-    for (uint8_t i = 0; i < numSprites; i++) {
+    for (uint8_t i = 0; i < numSprites; i++)
+    {
         Sprite *sprite = &sprites[i];
         uint8_t spritetileX = sprite->x / TILE_WIDTH;
         uint8_t spritetileY = sprite->y / TILE_HEIGHT;
 
-        for (uint8_t y = 0; y < sprite->spriteHeight / TILE_HEIGHT; y++) {
-            for (uint8_t x = 0; x < sprite->spriteWidth / TILE_WIDTH; x++) {
+        for (uint8_t y = 0; y < sprite->spriteHeight / TILE_HEIGHT; y++)
+        {
+            for (uint8_t x = 0; x < sprite->spriteWidth / TILE_WIDTH; x++)
+            {
                 // Check if the tile is already occupied by a character
-                if (tilemap[spritetileY + y][spritetileX + x] != CHARACTER_TILE_INDEX) {
+                if (tilemap[spritetileY + y][spritetileX + x] != CHARACTER_TILE_INDEX)
+                {
                     tilemap[spritetileY + y][spritetileX + x] = SPRITE_TILE_INDEX;
-                } else {
+                }
+                else
+                {
                     // Handle overlapping characters and sprites
                     // For example, mark the tile as both character and sprite
                     tilemap[spritetileY + y][spritetileX + x] |= SPRITE_TILE_INDEX;
@@ -57,7 +70,8 @@ void UpdateTileMapWithSprites(Character *characters, Sprite *sprites, uint8_t nu
     }
 }
 
-void checkCollisions(Character *character, Sprite *sprite) {
+void checkCollisions(Character *character, Sprite *sprite)
+{
     // Calculate the bounding boxes for character and sprite
     uint8_t charLeft = character->characterX;
     uint8_t charRight = character->characterX + character->characterWidth;
@@ -81,18 +95,23 @@ void checkCollisions(Character *character, Sprite *sprite) {
     uint8_t spriteTileBottom = spriteBottom / TILE_HEIGHT;
 
     // Iterate over tiles within the bounding box of character and sprite
-    for (uint8_t y = charTileTop; y <= charTileBottom; y++) {
-        for (uint8_t x = charTileLeft; x <= charTileRight; x++) {
+    for (uint8_t y = charTileTop; y <= charTileBottom; y++)
+    {
+        for (uint8_t x = charTileLeft; x <= charTileRight; x++)
+        {
             // Check collision with character's bounding box
-            if (tilemap[y][x] != 0) {
+            if (tilemap[y][x] != 0)
+            {
                 // Handle collision
                 // Example: Adjust character's position or trigger action
             }
         }
     }
 
-    for (uint8_t y = spriteTileTop; y <= spriteTileBottom; y++) {
-        for (uint8_t x = spriteTileLeft; x <= spriteTileRight; x++) {
+    for (uint8_t y = spriteTileTop; y <= spriteTileBottom; y++)
+    {
+        for (uint8_t x = spriteTileLeft; x <= spriteTileRight; x++)
+        {
             // Check collision with sprite
         }
     }

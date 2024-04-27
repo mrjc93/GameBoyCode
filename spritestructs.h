@@ -4,43 +4,38 @@
 #include <gb/gb.h>
 #include <stdio.h>
 
+typedef struct Sprite
+{
 
+    uint8_t spriteID;
 
+    uint8_t spriteHeight;
 
-typedef struct Sprite{
+    uint8_t spriteWidth;
 
-uint8_t spriteID;
+    uint8_t spriteFrames;
 
-uint8_t spriteHeight;
+    uint8_t spritecurrentFrame;
 
-uint8_t spriteWidth;
+    uint8_t tilesetStart;
 
-uint8_t spriteFrames;
+    uint8_t x;
 
-uint8_t spritecurrentFrame;
+    uint8_t y;
 
-uint8_t tilesetStart;
+    uint8_t velocityX;
 
-uint8_t x;
+    uint8_t velocityY;
 
-uint8_t y;
+    uint8_t Xbounds;
 
-uint8_t velocityX;
+    uint8_t YBounds;
 
-uint8_t velocityY;
+    uint8_t Ypos;
 
-uint8_t Xbounds;
+    const unsigned char *tileset;
 
-uint8_t YBounds;
-
-uint8_t Ypos;
-
-const unsigned char *tileset;
-
-
-
-
-}Sprite;
+} Sprite;
 
 void getSpriteBox(Sprite *sprite, uint8_t x, uint8_t y)
 {
@@ -52,17 +47,8 @@ void getSpriteBox(Sprite *sprite, uint8_t x, uint8_t y)
     uint8_t boxXbounds = x + xWidth;
     uint8_t boxYbounds = y + yHeight;
 
-
     boxXbounds = sprite->Xbounds;
     boxYbounds = sprite->YBounds;
-
-   
-
-
-
-
-
-
 }
 
 void LoadSpriteFrame(Sprite *sprite, uint8_t frame)
@@ -77,52 +63,36 @@ void LoadSpriteFrame(Sprite *sprite, uint8_t frame)
     }
 }
 
-void moveSprite (Sprite *sprite, uint8_t x, uint8_t y)
+void moveSprite(Sprite *sprite, uint8_t x, uint8_t y)
 {
     sprite->x = x;
     sprite->y = y;
 
-    for (uint8_t iy = 0; iy!= sprite->spriteHeight; iy++)
+    for (uint8_t iy = 0; iy != sprite->spriteHeight; iy++)
     {
         for (uint8_t ix = 0; ix != sprite->spriteWidth; ix++)
         {
-         uint8_t index = sprite->spriteID + ix + (iy * sprite->spriteWidth);
+            uint8_t index = sprite->spriteID + ix + (iy * sprite->spriteWidth);
 
-         move_sprite(index, x + (ix * 8), y + (iy * 8));
+            move_sprite(index, x + (ix * 8), y + (iy * 8));
         }
     }
 }
 
 void scrollSprite(Sprite *sprite, uint8_t x, uint8_t y)
 {
-    
+
     sprite->x = x;
     sprite->y = y;
-    
-
-
-
 
     scroll_sprite(sprite->tilesetStart, x, y);
 
-
-    
-    
-   
-
     getSpriteBox(sprite, x, y);
-
-
-    
-
 }
 
-
-
-
-
 void setupSprites(Sprite *sprite, uint8_t spriteID, int8_t spriteHeight, uint8_t spriteWidth, uint8_t spriteFrames, uint8_t tilesetStart, uint8_t x, uint8_t y,
-uint8_t velocityX, uint8_t velocityY, uint8_t Ypos,  const unsigned char *tileset){
+                  uint8_t velocityX, uint8_t velocityY, uint8_t Ypos, const unsigned char *tileset)
+{
 
     sprite->tileset = tileset;
     sprite->tilesetStart = tilesetStart;
@@ -130,24 +100,14 @@ uint8_t velocityX, uint8_t velocityY, uint8_t Ypos,  const unsigned char *tilese
     sprite->spriteHeight = spriteHeight;
     sprite->spriteWidth = spriteWidth;
     sprite->spriteFrames = spriteFrames;
-    
+
     sprite->x = x;
     sprite->y = y;
     sprite->velocityX = velocityX;
     sprite->velocityY = velocityY;
     sprite->Ypos = sprite->y = Ypos;
 
-     LoadSpriteFrame(sprite, 0);
-
-     
-     
-    
-  
-
-  
-
+    LoadSpriteFrame(sprite, 0);
 }
-
-
 
 #endif
