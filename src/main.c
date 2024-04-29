@@ -100,7 +100,9 @@ void playerMovement(Character *character)
 
 void main(void)
 {
-    
+    NR52_REG = 0x80;
+    NR50_REG = 0x77;
+    NR51_REG = 0xFF;
     DISPLAY_ON;
     SHOW_BKG;
     setmenuBackground();
@@ -143,7 +145,12 @@ void main(void)
             
             spriteYpos = 0;
             spriteXpos = random_number(20, 160);
+           NR41_REG=0x3A;
+           NR42_REG=0xA1;
+           NR43_REG=0x00;
+           NR44_REG=0xC0;
             moveSprite(&wineglass, spriteXpos, spriteYpos);
+
            
         }
         else if (spriteYpos == 150)
@@ -151,6 +158,10 @@ void main(void)
          spriteYpos = 0;
          spriteXpos = random_number(20, 160);
          lives--;
+        NR21_REG = 0x81;
+        NR22_REG = 0x84;
+        NR23_REG = 0xD7;
+        NR24_REG = 0x86;
          moveSprite(&wineglass, spriteXpos, spriteYpos);
          gameoverCheck(lives);
        
