@@ -65,7 +65,7 @@ void main(void)
 {
     DISPLAY_ON;
     
-    printf ("press up to start!");
+    printf ("\n\n\n\n\n\n Press up to Start!");
     
     waitpad(J_UP);
 
@@ -91,9 +91,10 @@ void main(void)
     
 
 
-   
-    while (1)
+    uint8_t lives = 3;
+    while (lives > 0)
     {
+       
         playerMovement(&bartender);
         scrollSprite(&wineglass, 0, 1);
         spriteYpos++;
@@ -105,7 +106,21 @@ void main(void)
             moveSprite(&wineglass, spriteXpos, spriteYpos);
            
         }
+        else if (spriteYpos == 150)
+        {
+         spriteYpos = 0;
+         spriteXpos = random_number(20, 160);
+         lives--;
+         moveSprite(&wineglass, spriteXpos, spriteYpos);
+        }
+
+        
+        
 
         wait_vbl_done();
     }
+
+  
+    HIDE_SPRITES;
+    printf ("\n\n\n\n\n\n      You lose                          ");
 }
