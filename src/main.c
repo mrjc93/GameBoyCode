@@ -8,7 +8,8 @@
 #include "Bartender.c"
 #include "wine.c"
 #include "utils.c"
-
+#include "splashscreen.c"
+#include "gameoverscreen.c"
 #define NUM_CHARACTERS 1
 #define NUM_SPRITES 1
 
@@ -19,6 +20,13 @@ uint8_t characterYpos = 140;
 uint8_t characterXpos = 80;
 
 
+void setmenuBackground(void)
+{
+
+    set_bkg_data(0, 211, splashscreen_tileset);
+    set_bkg_tiles(0, 0, 20, 18, splashscreen_tilemap);
+}
+
 void setBackground(void)
 {
 
@@ -26,6 +34,12 @@ void setBackground(void)
     set_bkg_tiles(0, 0, 20, 18, backgroundmap);
 }
 
+void setGameover(void)
+{
+   set_bkg_data(0, 84, gameoverscreen_tileset);
+   set_bkg_tiles(0, 0, 20, 18, gameoverscreen_tilemap);
+
+}
 void loadSprites(void)
 {
     set_sprite_data(0, 1, Wine);
@@ -61,22 +75,48 @@ void playerMovement(Character *character)
     }
 }
 
+    void gameoverCheck(uint8_t lives)
+    {
+        if (lives == 0)
+        {
+
+        
+            HIDE_SPRITES;
+            setGameover();
+            waitpad(J_UP);
+            main();
+
+          
+            
+            
+
+        }
+       
+     
+
+   
+    }
+
+
 void main(void)
 {
-    DISPLAY_ON;
     
-    printf ("\n\n\n\n\n\n Press up to Start!");
+    DISPLAY_ON;
+    SHOW_BKG;
+    setmenuBackground();
+    
     
     waitpad(J_UP);
 
     
-    SHOW_BKG;
+    
     SHOW_SPRITES;
 
 
 
     initialize_random();
     uint8_t spriteXpos = random_number(20, 160);
+    uint8_t lives = 3;
     setBackground();
     loadSprites();
 
@@ -91,8 +131,8 @@ void main(void)
     
 
 
-    uint8_t lives = 3;
-    while (lives > 0)
+   
+    while (1)
     {
        
         playerMovement(&bartender);
@@ -112,15 +152,24 @@ void main(void)
          spriteXpos = random_number(20, 160);
          lives--;
          moveSprite(&wineglass, spriteXpos, spriteYpos);
+         gameoverCheck(lives);
+       
+
         }
 
-        
+       
+
         
 
+        
         wait_vbl_done();
+
     }
 
+    
+
   
-    HIDE_SPRITES;
-    printf ("\n\n\n\n\n\n      You lose                          ");
+    
+    
+
 }
