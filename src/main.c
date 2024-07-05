@@ -13,10 +13,12 @@
 #include "gameoverscreen.c"
 #include <gbdk/font.h>
 #include "windowmap.c"
+#include "snaillife.c"
+
 Sprite wineglass;
 Character bartender;
 uint8_t spriteYpos = 0;
-uint8_t characterYpos = 140;
+uint8_t characterYpos = 130;
 uint8_t characterXpos = 80;
 
 
@@ -25,13 +27,16 @@ void setmenuBackground(void)
 
     set_bkg_data(0, 211, splashscreen_tileset);
     set_bkg_tiles(0, 0, 20, 18, splashscreen_tilemap);
+    
 }
 
 void setBackground(void)
 {
 
     set_bkg_data(37, 18, BackgroundTiles);
-    set_bkg_tiles(0, 0, 20, 18, backgroundmap);
+    set_bkg_tiles(0, -1, 20, 18, backgroundmap);
+    set_bkg_data(55, 2, snaillife);
+    
 }
 
 void setGameover(void)
@@ -57,8 +62,8 @@ void setFont(void)
 
 void setWindow(void)
 {
-    set_win_tiles(0, 0, 5, 1, windowmap);
-    move_win(7, 130);
+    set_win_tiles(0, 0, 20, 1, windowmap);
+    move_win(7, 135);
 }
 
 void playerMovement(Character *character)
@@ -92,11 +97,25 @@ void playerMovement(Character *character)
 
     void gameoverCheck(uint8_t lives)
     {
-        if (lives == 0)
+
+         if (lives == 3)
+         {
+         set_win_tiles(0, 0, 20, 1, windowmap);
+         }
+         else if (lives == 2)
+         {
+         set_win_tiles(0, 0, 20, 1, windowmap2);
+         }
+         else  if (lives == 1)
+         {
+            set_win_tiles(0, 0, 20, 1, windowmap3);
+         }
+         else 
         {
 
         
             HIDE_SPRITES;
+            HIDE_WIN;
             setGameover();
             waitpad(J_UP);
             reset();
@@ -144,7 +163,7 @@ void main()
     setupSprites(&wineglass, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, Wine);
 
     moveSprite(&wineglass, spriteXpos, 0);
-    moveCharacter(&bartender, 80, 140);
+    moveCharacter(&bartender, 80, 130);
     
   
     
