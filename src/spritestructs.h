@@ -37,20 +37,6 @@ typedef struct Sprite
 
 } Sprite;
 
-void getSpriteBox(Sprite *sprite, uint8_t x, uint8_t y)
-{
-    sprite->x = x;
-    sprite->y = y;
-    uint8_t xWidth = sprite->spriteWidth;
-    uint8_t yHeight = sprite->spriteHeight;
-
-    uint8_t boxXbounds = x + xWidth;
-    uint8_t boxYbounds = y + yHeight;
-
-    boxXbounds = sprite->Xbounds;
-    boxYbounds = sprite->YBounds;
-}
-
 void LoadSpriteFrame(Sprite *sprite, uint8_t frame)
 {
     sprite->spritecurrentFrame = frame;
@@ -63,6 +49,8 @@ void LoadSpriteFrame(Sprite *sprite, uint8_t frame)
     }
 }
 
+
+
 void moveSprite(Sprite *sprite, uint8_t x, uint8_t y)
 {
     sprite->x = x;
@@ -72,23 +60,51 @@ void moveSprite(Sprite *sprite, uint8_t x, uint8_t y)
     {
         for (uint8_t ix = 0; ix != sprite->spriteWidth; ix++)
         {
-            uint8_t index = sprite->spriteID + ix + (iy * sprite->spriteWidth);
+            uint8_t index = sprite->tilesetStart + ix + (iy * sprite->spriteWidth);
 
-            move_sprite(index, x + (ix * 8), y + (iy * 8));
+            move_sprite(index, x, y);
         }
     }
 }
 
 void scrollSprite(Sprite *sprite, uint8_t x, uint8_t y)
 {
+    
 
     sprite->x = x;
     sprite->y = y;
 
-    scroll_sprite(sprite->tilesetStart, x, y);
 
-    getSpriteBox(sprite, x, y);
+    
+
+
+for (uint8_t iy = 0; iy != sprite->spriteHeight; iy++)
+    {
+        for (uint8_t ix = 0; ix != sprite->spriteWidth; ix++)
+        {
+            uint8_t index = sprite->tilesetStart + ix + (iy * sprite->spriteWidth);
+
+            scroll_sprite(index, x, y);
+            
+             
+    
+        }
+    }
+
+    
+    
 }
+
+
+    
+
+
+   
+    
+    
+
+
+    
 
 void setupSprites(Sprite *sprite, uint8_t spriteID, int8_t spriteHeight, uint8_t spriteWidth, uint8_t spriteFrames, uint8_t tilesetStart, uint8_t x, uint8_t y,
                   uint8_t velocityX, uint8_t velocityY, uint8_t Ypos, const unsigned char *tileset)
@@ -108,6 +124,9 @@ void setupSprites(Sprite *sprite, uint8_t spriteID, int8_t spriteHeight, uint8_t
     sprite->Ypos = sprite->y = Ypos;
 
     LoadSpriteFrame(sprite, 0);
+
+
+
 }
 
 #endif

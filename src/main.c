@@ -1,3 +1,4 @@
+
 #include <gb/gb.h>
 #include <stdio.h>
 #include <rand.h>
@@ -8,11 +9,10 @@
 #include "Bartender.c"
 #include "wine.c"
 #include "utils.c"
-#include "splashscreen.c"
+#include "startscreen.c"
 #include "gameoverscreen.c"
-#define NUM_CHARACTERS 1
-#define NUM_SPRITES 1
-
+#include <gbdk/font.h>
+#include "windowmap.c"
 Sprite wineglass;
 Character bartender;
 uint8_t spriteYpos = 0;
@@ -30,7 +30,7 @@ void setmenuBackground(void)
 void setBackground(void)
 {
 
-    set_bkg_data(0, 18, BackgroundTiles);
+    set_bkg_data(37, 18, BackgroundTiles);
     set_bkg_tiles(0, 0, 20, 18, backgroundmap);
 }
 
@@ -44,6 +44,21 @@ void loadSprites(void)
 {
     set_sprite_data(0, 1, Wine);
     set_sprite_data(1, 4, Bartender);
+}
+
+void setFont(void)
+{
+    font_t min_font;
+    font_init();
+    min_font = font_load(font_min);
+    font_set(min_font);
+    SHOW_WIN;
+}
+
+void setWindow(void)
+{
+    set_win_tiles(0, 0, 5, 1, windowmap);
+    move_win(7, 130);
 }
 
 void playerMovement(Character *character)
@@ -84,7 +99,7 @@ void playerMovement(Character *character)
             HIDE_SPRITES;
             setGameover();
             waitpad(J_UP);
-            main();
+            reset();
 
           
             
@@ -98,20 +113,21 @@ void playerMovement(Character *character)
     }
 
 
-void main(void)
+
+void main() 
 {
     NR52_REG = 0x80;
     NR50_REG = 0x77;
     NR51_REG = 0xFF;
     DISPLAY_ON;
     SHOW_BKG;
-    setmenuBackground();
     
     
-    waitpad(J_UP);
+    
+    
 
     
-    
+    setFont();
     SHOW_SPRITES;
 
 
@@ -121,9 +137,10 @@ void main(void)
     uint8_t lives = 3;
     setBackground();
     loadSprites();
+    setWindow();
 
 
-    setupCharacter(&bartender, 1, 2, 2, 4, 1, 1, 1, 0, 0, Bartender);
+    setupCharacter(&bartender, 1, 2, 2, 4, 1, 1, 1,   Bartender);
     setupSprites(&wineglass, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, Wine);
 
     moveSprite(&wineglass, spriteXpos, 0);
