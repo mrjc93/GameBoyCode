@@ -20,8 +20,8 @@ Character bartender;
 uint8_t spriteYpos = 0;
 uint8_t characterYpos = 130;
 uint8_t characterXpos = 80;
-uint8_t scoreindex0 = 21;
-uint8_t scoreindex1 = 21;
+uint8_t scoreindex0 = 30;
+uint8_t scoreindex1 = 30;
 
 uint8_t lifeindex = 24;
 
@@ -78,13 +78,13 @@ void setLifeScore(void) {
 
 void updateScore(void){
 
-if (scoreindex0 <= 30)
+if (scoreindex0 < 30)
 {
     scoreindex0 = scoreindex0 + 1;
     set_win_tile_xy(18, 0, windowmap[scoreindex0]);
     
 }
-if (scoreindex0 > 30)
+if (scoreindex0 >= 30 && scoreindex1 > 30)
 {
     scoreindex0 = scoreindex0 - 10;
     scoreindex1 = scoreindex1 + 1;
@@ -93,6 +93,13 @@ if (scoreindex0 > 30)
 
    
 }
+else{
+    set_win_tile_xy(18, 0, windowmap[30]);
+    set_win_tile_xy(17, 0, windowmap[30]);
+}
+   
+    
+
 
 
 }
