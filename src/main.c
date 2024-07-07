@@ -16,6 +16,7 @@
 #include "snaillife.c"
 
 Sprite wineglass;
+Sprite wineglass1;
 Character bartender;
 uint8_t spriteYpos = 0;
 uint8_t characterYpos = 130;
@@ -71,27 +72,39 @@ void playerMovement(Character *character)
 
     int8_t moveX = 0;
     uint8_t buttons = joypad();
+   
 
     uint8_t index = character->characterID;
 
     uint8_t characterCount = character->characterWidth + character->characterHeight;
 
-    if (buttons & J_LEFT)
+    if (buttons & J_LEFT && characterXpos >= 9)
     {
+        
         moveX = -1;
         characterXpos = characterXpos - 1;
-       
+        
+        
     }
-    if (buttons & J_RIGHT)
+    
+    if (buttons & J_RIGHT && characterXpos <= 152)
     {
         moveX = 1;
         characterXpos = characterXpos + 1;
-        
+       
+    
     }
+  
+    
+    
+  
+   
+
+    
     for (uint8_t i = 0; i != characterCount; i++)
     {
         scroll_sprite(character->charactertilesetStart + i, moveX, 0);
-        
+       
     }
 }
 
@@ -133,7 +146,7 @@ void playerMovement(Character *character)
 
 
 
-void main() 
+void main(void) 
 {
     NR52_REG = 0x80;
     NR50_REG = 0x77;
@@ -161,6 +174,7 @@ void main()
 
     setupCharacter(&bartender, 1, 2, 2, 4, 1, 1, 1,   Bartender);
     setupSprites(&wineglass, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, Wine);
+    setupSprites(&wineglass1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, Wine);
 
     moveSprite(&wineglass, spriteXpos, 0);
     moveCharacter(&bartender, 80, 130);
@@ -175,6 +189,7 @@ void main()
        
         playerMovement(&bartender);
         scrollSprite(&wineglass, 0, 1);
+        
         spriteYpos++;
         if (spriteYpos == characterYpos && spriteXpos == characterXpos || spriteYpos == characterYpos && spriteXpos == characterXpos + 1 || spriteYpos == characterYpos && spriteXpos == characterXpos + 10 || spriteYpos == characterYpos && spriteXpos == characterXpos + 9 || spriteYpos == characterYpos && spriteXpos == characterXpos + 8 || spriteYpos == characterYpos && spriteXpos == characterXpos + 7 || spriteYpos == characterYpos && spriteXpos == characterXpos + 5 || spriteYpos == characterYpos && spriteXpos == characterXpos + 4 || spriteYpos == characterYpos && spriteXpos == characterXpos + 6 || spriteYpos == characterYpos && spriteXpos == characterXpos + 2 || spriteYpos == characterYpos && spriteXpos == characterXpos + 3 || spriteYpos == characterYpos && spriteXpos == characterXpos - 1 || spriteYpos == characterYpos && spriteXpos == characterXpos - 2 || spriteYpos == characterYpos && spriteXpos == characterXpos - 3)
         {
@@ -186,13 +201,14 @@ void main()
            NR43_REG=0x00;
            NR44_REG=0xC0;
             moveSprite(&wineglass, spriteXpos, spriteYpos);
+            moveSprite(&wineglass1, spriteXpos, spriteYpos);
 
            
         }
         else if (spriteYpos == 150)
         {
          spriteYpos = 0;
-         spriteXpos = random_number(20, 160);
+         spriteXpos = random_number(10, 150);
          lives--;
         NR21_REG = 0x81;
         NR22_REG = 0x84;
