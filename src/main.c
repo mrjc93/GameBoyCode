@@ -20,8 +20,8 @@ Character bartender;
 uint8_t spriteYpos = 0;
 uint8_t characterYpos = 130;
 uint8_t characterXpos = 80;
-uint8_t scoreindex0 = 30;
-uint8_t scoreindex1 = 30;
+uint8_t scoreindex0 = 21;
+uint8_t scoreindex1 = 21;
 
 uint8_t lifeindex = 24;
 
