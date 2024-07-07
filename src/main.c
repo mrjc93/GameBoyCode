@@ -16,12 +16,14 @@
 #include "snaillife.c"
 
 Sprite wineglass;
-Sprite wineglass1;
 Character bartender;
 uint8_t spriteYpos = 0;
 uint8_t characterYpos = 130;
 uint8_t characterXpos = 80;
+uint8_t scoreindex0 = 21;
+uint8_t scoreindex1 = 21;
 
+uint8_t lifeindex = 24;
 
 void setmenuBackground(void)
 {
@@ -63,8 +65,36 @@ void setFont(void)
 
 void setWindow(void)
 {
-    set_win_tiles(0, 0, 20, 1, windowmap);
+    set_win_tiles(0, 0, 31, 1, windowmap);
     move_win(7, 135);
+}
+
+void setLifeScore(void) {
+    set_win_tile_xy(5, 0, windowmap[lifeindex]);
+    set_win_tile_xy(18, 0, windowmap[scoreindex0]);
+    set_win_tile_xy(17, 0, windowmap[scoreindex1]);
+   
+}
+
+void updateScore(void){
+
+if (scoreindex0 <= 30)
+{
+    scoreindex0 = scoreindex0 + 1;
+    set_win_tile_xy(18, 0, windowmap[scoreindex0]);
+    
+}
+if (scoreindex0 > 30)
+{
+    scoreindex0 = scoreindex0 - 10;
+    scoreindex1 = scoreindex1 + 1;
+    set_win_tile_xy(18, 0, windowmap[scoreindex0]);
+    set_win_tile_xy(17, 0, windowmap[scoreindex1]);
+
+   
+}
+
+
 }
 
 void playerMovement(Character *character)
@@ -72,6 +102,7 @@ void playerMovement(Character *character)
 
     int8_t moveX = 0;
     uint8_t buttons = joypad();
+    int8_t moveY = 0;
    
 
     uint8_t index = character->characterID;
@@ -94,7 +125,7 @@ void playerMovement(Character *character)
        
     
     }
-  
+    
     
     
   
@@ -103,7 +134,7 @@ void playerMovement(Character *character)
     
     for (uint8_t i = 0; i != characterCount; i++)
     {
-        scroll_sprite(character->charactertilesetStart + i, moveX, 0);
+        scroll_sprite(character->charactertilesetStart + i, moveX, moveY);
        
     }
 }
@@ -111,22 +142,9 @@ void playerMovement(Character *character)
     void gameoverCheck(uint8_t lives)
     {
 
-         if (lives == 3)
+   
+         if (lives == 0)
          {
-         set_win_tiles(0, 0, 20, 1, windowmap);
-         }
-         else if (lives == 2)
-         {
-         set_win_tiles(0, 0, 20, 1, windowmap2);
-         }
-         else  if (lives == 1)
-         {
-            set_win_tiles(0, 0, 20, 1, windowmap3);
-         }
-         else 
-        {
-
-        
             HIDE_SPRITES;
             HIDE_WIN;
             setGameover();
@@ -170,11 +188,12 @@ void main(void)
     setBackground();
     loadSprites();
     setWindow();
+    
 
 
     setupCharacter(&bartender, 1, 2, 2, 4, 1, 1, 1,   Bartender);
     setupSprites(&wineglass, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, Wine);
-    setupSprites(&wineglass1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, Wine);
+
 
     moveSprite(&wineglass, spriteXpos, 0);
     moveCharacter(&bartender, 80, 130);
@@ -186,7 +205,7 @@ void main(void)
    
     while (1)
     {
-       
+        setLifeScore();
         playerMovement(&bartender);
         scrollSprite(&wineglass, 0, 1);
         
@@ -200,8 +219,12 @@ void main(void)
            NR42_REG=0xA1;
            NR43_REG=0x00;
            NR44_REG=0xC0;
+
+           updateScore();
+           
             moveSprite(&wineglass, spriteXpos, spriteYpos);
-            moveSprite(&wineglass1, spriteXpos, spriteYpos);
+            
+            
 
            
         }
@@ -214,6 +237,8 @@ void main(void)
         NR22_REG = 0x84;
         NR23_REG = 0xD7;
         NR24_REG = 0x86;
+        lifeindex = lifeindex - 1;
+        set_win_tile_xy(5, 0, windowmap[lifeindex]);
          moveSprite(&wineglass, spriteXpos, spriteYpos);
          gameoverCheck(lives);
        
